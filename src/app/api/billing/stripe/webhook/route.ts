@@ -37,9 +37,13 @@ export async function POST(req: Request) {
       }
       case "customer.subscription.created":
       case "customer.subscription.updated":
-      case "customer.subscription.deleted":
-        await syncStripeSubscription(admin, event.data.object);
+      case "customer.subscription.deleted": {
+        // Re-read through the SDK (pinned API version) so the shape never depends
+        // on the webhook endpoint's API version. Deleted subscriptions still retrieve.
+        const sub = await s.subscriptions.retrieve(event.data.object.id);
+        await syncStripeSubscription(admin, sub);
         break;
+      }
       default:
         break;
     }
