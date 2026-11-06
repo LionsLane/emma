@@ -14,7 +14,7 @@ Phases in order. Each one ends working, tested and documented before the next st
 | 4 | UI/UX v1 (B-18) | Landing, skeletons, palette, toasts, kanban, drag-to-reschedule, legal, a11y, error boundaries | Done |
 | 5 | Mobile MVP | Expo: sign in, Desk, Planner, Tickets, Me | Done in code; device test needs backend |
 | **6** | **Sokoni redesign** | Brand v2 in code (below) | **Next** |
-| 7 | Deploy | Supabase, Vercel, SMTP, keys, domain | Needs LionsLane accounts |
+| 7 | Deploy | Supabase, Vercel, SMTP, keys, domain | **Live** at https://emma.lionslane.co.ke since 6 Nov 2026 (accounts, database, security pass the live test). AI, payments and custom email wait for owner keys (section 3a) |
 | 8 | Launch test | 10 owner interviews, 20 paying Pro users in 30 days | After deploy |
 | 9 | v1.1 | Push + Monday brief, Bado reasons, team invites, Swahili UI, RevenueCat IAP, M-Pesa renewal reminders | Planned |
 | 10 | v2 | Publishing to Meta/TikTok/LinkedIn, WhatsApp Business API, ads + GA4 sync, image generation | Planned |
@@ -39,6 +39,21 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | 6.13 Screens + docs | New screenshots in `docs/screens/`, update README | `docs/` | Screenshots match the build |
 
 **Don't change in phase 6:** API shapes, database schema, plan limits, security controls.
+
+## 3a. Live setup (6 November 2026)
+
+| Part | Where | State |
+|---|---|---|
+| Web app | Vercel project `emma` (account stevenkamau700-4495), https://emma.lionslane.co.ke (fallback https://emma-omega-two.vercel.app) | Live |
+| Domain | Cloudflare zone lionslane.co.ke: CNAME `emma` to `5c9a6e443203e4ec.vercel-dns-017.com`, DNS only | Live, HTTPS |
+| Database and sign-in | Supabase project **EMMA**, ref `vxxybllgluasxtohnntu`, Frankfurt; migration applied; Site URL emma.lionslane.co.ke | Live |
+| Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke>; Supabase SMTP form filled except the password | Waiting for the Brevo SMTP key |
+| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ on the Lions Lane mail router (LionsLane/lionslane PR #17) | Waiting for merge and the Cloudflare worker deploy |
+| Lions Lane website | EMMA tab, menu item, footer link and /emma page (LionsLane/lionslane PR #17) | Waiting for merge and deploy |
+| AI | Claude Console key `EMMA production` (promotional credit USD 99.72 until 18 Mar 2027) | Waiting for the key in `.env.local` |
+| Cards | Stripe account **EMMA** `acct_1UYoy0Dt4BY5EyCm` (United States, test mode). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Waiting for the secret key and webhook signing secret; live payments need Stripe business verification |
+| M-Pesa | Safaricom Daraja | Waiting for the app keys |
+| Live test | `node scripts/e2e.mjs` (27 checks) and `node scripts/e2e.mjs --ai` | 27 of 27 passed on 6 Nov 2026 |
 
 ## 3. Phase 7: Deploy (owner-supplied items first)
 
