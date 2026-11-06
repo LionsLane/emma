@@ -1,0 +1,40 @@
+# EMMA by Lions Lane
+
+> EMMA is an AI marketing assistant for small businesses in Kenya, made by Lions Lane, a digital marketing agency in Nairobi. A business owner briefs EMMA in one sentence; she plans their posts, writes them in their brand voice, keeps every enquiry on a lead ticket and drafts the next follow-up. Every piece of work arrives as a card the owner approves, edits or sends back. EMMA does not post or send messages by herself.
+
+## What EMMA does
+
+- Content planner: posts planned around the business's offers, holidays and busy seasons, with the copy written for each post (Instagram, Facebook, TikTok, LinkedIn, WhatsApp Status, email, blog).
+- Leads: every enquiry on a ticket, "who to call today", and the next WhatsApp or email drafted. Contacts carry consent flags under Kenya's Data Protection Act, 2019.
+- Campaigns: paid ad plans with budgets, audiences and ad copy for Meta, Google, TikTok and LinkedIn.
+- Email and WhatsApp follow-up sequences.
+- A library of all approved copy.
+- Results in shillings: leads, campaigns and spend in one place.
+
+## Plans (Kenyan shillings, per month)
+
+- Free: KES 0. 15 briefs a month on Claude Haiku 5.5, 50 leads.
+- Pro: KES 500. 30 briefs a month on Claude Sonnet 5.5, web research, 1,000 leads.
+- Max: KES 1,500. 35 briefs a month on Claude Opus 5.5, 40 web searches, 3 brands and 3 team seats, the Pitch Jury, unlimited leads.
+
+A brief is any request to EMMA, for example "plan my week" or "follow up the people who asked about prices".
+
+## Facts
+
+- Made by Lions Lane, Nairobi, Kenya: https://lionslane.co.ke (about EMMA: https://lionslane.co.ke/emma)
+- The app: https://emma.lionslane.co.ke
+- Sign in with an email code, Google, or a passkey. Two-step verification is available (authenticator app or passkey).
+- EMMA runs on Claude models by Anthropic. Workspace data is not used to train AI models.
+- EMMA does not invent prices, statistics or results; missing facts are left in [brackets] for the owner to fill in.
+
+## Pages
+
+- [Home and pricing](https://emma.lionslane.co.ke/)
+- [Privacy Policy](https://emma.lionslane.co.ke/legal/privacy)
+- [Terms of Service](https://emma.lionslane.co.ke/legal/terms)
+- [Acceptable Use Policy](https://emma.lionslane.co.ke/legal/acceptable-use)
+- [AI Policy](https://emma.lionslane.co.ke/legal/ai)
+- [Security](https://emma.lionslane.co.ke/legal/security)
+- [Cookie Notice](https://emma.lionslane.co.ke/legal/cookies)
+- [Refund Policy](https://emma.lionslane.co.ke/legal/refunds)
+- [Data Processing Addendum](https://emma.lionslane.co.ke/legal/dpa)

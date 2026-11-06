@@ -2,7 +2,8 @@
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { isResponse, requireUser } from "@/lib/server/auth";
-import { appUrl, stripe, stripePrice } from "@/lib/server/billing";
+import { appUrl, practicePaymentsBlocked, stripe, stripePrice, stripeTestMode } from "@/lib/server/billing";
+import { resolvePlan } from "@/lib/server/quota";
 import { fail, json, publicError, readJson } from "@/lib/server/http";
 
 export const runtime = "nodejs";
@@ -13,6 +14,8 @@ export async function POST(req: Request) {
   if (isResponse(user)) return user;
   const s = stripe();
   if (!s) return fail(503, "Card payments aren't set up yet. Pay with M-Pesa.");
+  if (stripeTestMode() && practicePaymentsBlocked((await resolvePlan(supabaseAdmin(), user.id)).staff))
+    return fail(503, "Card payments open once our payment account is verified. Your Free plan keeps working in the meantime.");
   const raw = await readJson(req, 1_000);
   if (isResponse(raw)) return raw;
   const body = Body.safeParse(raw);

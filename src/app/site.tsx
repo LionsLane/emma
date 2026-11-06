@@ -34,6 +34,11 @@ export function SiteFooter() {
         <Link href="/legal/terms">Terms</Link>
         <Link href="/legal/cookies">Cookies</Link>
         <Link href="/legal/refunds">Refunds</Link>
+        <Link href="/legal/acceptable-use">Acceptable use</Link>
+        <Link href="/legal/ai">AI policy</Link>
+        <Link href="/legal/security">Security</Link>
+        <Link href="/legal/dpa">Data processing</Link>
+        <a href="https://lionslane.co.ke/emma">About EMMA at Lions Lane</a>
       </nav>
       <p className="small faint" style={{ margin: 0 }}>© {new Date().getFullYear()} {COMPANY.legalName}</p>
     </footer>

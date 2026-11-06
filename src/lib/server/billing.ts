@@ -5,6 +5,11 @@ import { PLANS, type PlanId } from "@/lib/plans";
 
 // ---------------------------------------------------------------- shared
 
+// Test keys (Stripe sk_test_, M-Pesa sandbox) accept practice payments, so on the live site only
+// Lions Lane staff may use them. Real customers see a clear message until the live keys are in.
+export const stripeTestMode = () => (process.env.STRIPE_SECRET_KEY ?? "").startsWith("sk_test_");
+export const mpesaSandbox = () => (process.env.MPESA_ENV ?? "sandbox") !== "production";
+export const practicePaymentsBlocked = (staff: boolean) => process.env.NODE_ENV === "production" && !staff;
 export const appUrl = () => (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:5180").replace(/\/$/, "");
 const DAY = 86_400_000;
 

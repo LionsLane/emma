@@ -21,7 +21,7 @@ const FEATURES = [
 ];
 
 const FAQ = [
-  { q: "Do I need a card to start?", a: "No. Free is free, with 15 briefs a month. Upgrade with M-Pesa or a card when you need more." },
+  { q: "Do I need a card to start?", a: "No. Free is free, with 15 briefs a month. Pro and Max will be paid by M-Pesa or card; those payments open once our payment accounts are verified." },
   { q: "Does EMMA post for me?", a: "Not yet. EMMA plans and writes everything and you approve it, then you post. Direct posting is on the roadmap." },
   { q: "What's a brief?", a: "Any request to EMMA: a month's calendar, a campaign, a follow-up sequence, a list of businesses to call. One brief can produce a lot of work." },
   { q: "Is my business data safe?", a: "Your workspace is private to your account. We use it only to do your work, never to train AI models, and you can export or delete it at any time." },
@@ -29,9 +29,30 @@ const FAQ = [
   { q: "Who's behind EMMA?", a: `${COMPANY.legalName}, a digital marketing agency in ${COMPANY.city}. EMMA is the product; LionsLane is the service.` },
 ];
 
+// What search engines and AI assistants read about EMMA: the app, its plans, who makes it, the FAQ.
+function jsonLd() {
+  const site = (process.env.NEXT_PUBLIC_APP_URL ?? "https://emma.lionslane.co.ke").replace(/\/$/, "");
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": "https://lionslane.co.ke/#org", name: "Lions Lane", url: "https://lionslane.co.ke/", logo: "https://lionslane.co.ke/assets/img/icon512.png" },
+      { "@type": "WebSite", "@id": `${site}/#website`, url: `${site}/`, name: "EMMA", publisher: { "@id": "https://lionslane.co.ke/#org" }, inLanguage: "en-KE" },
+      {
+        "@type": "SoftwareApplication", "@id": `${site}/#app`, name: "EMMA", alternateName: "EMMA by Lions Lane", url: `${site}/`,
+        applicationCategory: "BusinessApplication", operatingSystem: "Web",
+        description: "An AI marketing assistant for small businesses in Kenya. It plans posts, writes them in the business's voice and drafts lead follow-ups; a person approves everything.",
+        publisher: { "@id": "https://lionslane.co.ke/#org" }, inLanguage: "en-KE",
+        offers: PLAN_ORDER.map((id) => ({ "@type": "Offer", name: `EMMA ${PLANS[id].name}`, price: String(PLANS[id].priceKES), priceCurrency: "KES" })),
+      },
+      { "@type": "FAQPage", "@id": `${site}/#faq`, mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
+    ],
+  };
+}
+
 export default function Landing() {
   return (
     <div className="site">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd()).replace(/</g, "\\u003c") }} />
       <SiteNav />
       <main id="main">
         <section className="hero2">
@@ -104,7 +125,7 @@ export default function Landing() {
               );
             })}
           </div>
-          <p className="small faint" style={{ textAlign: "center", marginTop: 14 }}>Pay with M-Pesa or card. Cancel any time.</p>
+          <p className="small faint" style={{ textAlign: "center", marginTop: 14 }}>Start free today. Pro and Max open for M-Pesa and card payments once our payment accounts are verified.</p>
         </section>
 
         <section className="band" id="faq">

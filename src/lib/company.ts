@@ -9,4 +9,5 @@ export const COMPANY = {
   email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || "",
   phone: process.env.NEXT_PUBLIC_COMPANY_PHONE || "",
   privacyEmail: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || process.env.NEXT_PUBLIC_COMPANY_EMAIL || "",
+  securityEmail: process.env.NEXT_PUBLIC_SECURITY_EMAIL || process.env.NEXT_PUBLIC_COMPANY_EMAIL || "",
 };

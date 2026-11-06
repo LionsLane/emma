@@ -5,7 +5,8 @@ import { PLANS } from "@/lib/plans";
 import { normaliseKenyanPhone } from "@/lib/safe";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { isResponse, requireUser } from "@/lib/server/auth";
-import { mpesaConfigured, stkPush } from "@/lib/server/billing";
+import { mpesaConfigured, mpesaSandbox, practicePaymentsBlocked, stkPush } from "@/lib/server/billing";
+import { resolvePlan } from "@/lib/server/quota";
 import { fail, json, publicError, readJson } from "@/lib/server/http";
 
 export const runtime = "nodejs";
@@ -15,6 +16,8 @@ export async function POST(req: Request) {
   const user = await requireUser(req);
   if (isResponse(user)) return user;
   if (!mpesaConfigured()) return fail(503, "M-Pesa isn't set up yet.");
+  if (mpesaSandbox() && practicePaymentsBlocked((await resolvePlan(supabaseAdmin(), user.id)).staff))
+    return fail(503, "M-Pesa payments open once our PayBill is live. Your Free plan keeps working in the meantime.");
   const raw = await readJson(req, 1_000);
   if (isResponse(raw)) return raw;
   const body = Body.safeParse(raw);

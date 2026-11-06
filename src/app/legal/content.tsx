@@ -5,7 +5,10 @@ import { PLANS, formatKES } from "@/lib/plans";
 // Draft legal text for EMMA. Must be reviewed by a Kenyan advocate before
 // launch (see docs/15Legal.md). Business details come from COMPANY.
 
-export const UPDATED = "9 October 2026";
+export const UPDATED = "7 November 2026";
+
+const mail = (addr: string) => <a className="link" href={`mailto:${addr}`}>{addr}</a>;
+const securityContact = COMPANY.securityEmail ? mail(COMPANY.securityEmail) : "the contact details on our website";
 
 const contact = (
   <>
@@ -27,7 +30,8 @@ export const DOCS: Record<string, LegalDoc> = {
 
         <h2>What we collect</h2>
         <ul>
-          <li><b>Account</b>: your email address, name, and sign-in records.</li>
+          <li><b>Account</b>: your email address, name, and sign-in records. If you choose Google sign-in, Google shares your name and email address with us.</li>
+          <li><b>Sign-in security</b>: the two-step verification methods you add. For an authenticator app, our sign-in provider holds the shared secret; for a passkey, only a public key is stored. Your fingerprint, face or screen lock never leaves your device. A phone number, if you add text-message codes.</li>
           <li><b>Workspace content</b>: your business profile, calendar, campaigns, leads, emails, library and notes, and your conversations with EMMA.</li>
           <li><b>Leads</b>: contact details you add, and business contact details EMMA finds in public sources (always marked unverified and without consent).</li>
           <li><b>Usage</b>: how many briefs and searches you use, and the AI processing they needed, so we can enforce plan limits and costs.</li>
@@ -48,8 +52,11 @@ export const DOCS: Record<string, LegalDoc> = {
         <table className="legal-table">
           <thead><tr><th>Provider</th><th>What for</th><th>Where</th></tr></thead>
           <tbody>
-            <tr><td>Supabase</td><td>Database and sign-in</td><td>Cloud region chosen at setup</td></tr>
-            <tr><td>Vercel</td><td>Hosting the website and API</td><td>Global</td></tr>
+            <tr><td>Supabase</td><td>Database and sign-in</td><td>Frankfurt, Germany (EU)</td></tr>
+            <tr><td>Vercel</td><td>Hosting the website and API, and anonymous page statistics</td><td>Global</td></tr>
+            <tr><td>Brevo</td><td>Sending sign-in codes and account emails</td><td>European Union</td></tr>
+            <tr><td>Cloudflare</td><td>Our domain name and forwarding of our support email addresses</td><td>Global</td></tr>
+            <tr><td>Google</td><td>Google sign-in, only if you choose it</td><td>Global</td></tr>
             <tr><td>Anthropic</td><td>Generating EMMA&apos;s responses (Claude)</td><td>United States</td></tr>
             <tr><td>Stripe</td><td>Card payments</td><td>Global</td></tr>
             <tr><td>Safaricom</td><td>M-Pesa payments</td><td>Kenya</td></tr>
@@ -162,6 +169,134 @@ export const DOCS: Record<string, LegalDoc> = {
 
         <h2>How to ask</h2>
         <p>Contact us at {contact} with your account email and the M-Pesa receipt or card receipt. We aim to reply within 2 working days and refund within 7.</p>
+      </>
+    ),
+  },
+
+  "acceptable-use": {
+    title: "Acceptable Use Policy",
+    intro: "What you may and may not use EMMA for. It is part of our Terms of Service.",
+    body: (
+      <>
+        <h2>Use EMMA to market honestly</h2>
+        <p>EMMA is for planning and writing your own business&apos;s marketing and following up people who are interested in it. You approve everything EMMA drafts, so you are responsible for what you publish and send.</p>
+
+        <h2>You must not use EMMA to</h2>
+        <ul>
+          <li>Send spam, or market to people without a lawful basis, including bought, rented or scraped contact lists.</li>
+          <li>Add people to broadcasts or sequences who have not opted in, or ignore someone who asks you to stop.</li>
+          <li>Make false or misleading claims about prices, offers, products, results, health, money or qualifications.</li>
+          <li>Pretend to be another person or business, or copy another brand&apos;s identity.</li>
+          <li>Promote anything illegal in Kenya or where your customers are, or content that is hateful, harassing, sexual involving minors, or that incites violence.</li>
+          <li>Spread election or public-health misinformation.</li>
+          <li>Break platform rules (for example Meta, TikTok, Google or WhatsApp policies) with the content EMMA drafts.</li>
+          <li>Get around plan limits, share one account between businesses beyond your plan&apos;s seats, or resell EMMA without our written agreement.</li>
+          <li>Probe, overload or attack the service, try to reach other customers&apos; data, or reverse engineer it. To report a security issue, see our <a className="link" href="/legal/security">Security</a> page.</li>
+        </ul>
+
+        <h2>What happens if this policy is broken</h2>
+        <p>We may remove content, limit features, or suspend or close the account, with notice where reasonable. Serious or illegal use may be reported to the authorities.</p>
+
+        <h2>Questions</h2>
+        <p>{contact}</p>
+      </>
+    ),
+  },
+
+  ai: {
+    title: "AI Policy",
+    intro: "How EMMA uses artificial intelligence, what it can and cannot do, and how you stay in control.",
+    body: (
+      <>
+        <h2>The models</h2>
+        <p>EMMA runs on Claude models made by Anthropic: Claude Haiku 5.5 on Free, Claude Sonnet 5.5 on Pro and Claude Opus 5.5 on Max.</p>
+
+        <h2>What is sent to the AI</h2>
+        <p>When you brief EMMA, your message, the conversation and the parts of your workspace EMMA needs for that brief are sent to Anthropic to produce the reply. On Pro and Max, EMMA can also search the web; she shows the sources she used. Under Anthropic&apos;s commercial terms, this data is not used to train its models, and we do not use your workspace to train any model.</p>
+
+        <h2>You stay in control</h2>
+        <ul>
+          <li>EMMA proposes; you decide. Every plan, post, message, lead list and campaign arrives as a card you approve, edit or send back.</li>
+          <li>EMMA does not publish posts, send messages or spend money by herself.</li>
+          <li>When a fact is missing, such as a price or a date, EMMA leaves it in [brackets] for you to fill in instead of guessing, and adds a review note.</li>
+        </ul>
+
+        <h2>Limits you should know</h2>
+        <ul>
+          <li>AI can be wrong, out of date or unsuitable. Check prices, dates, offers, claims, and any health, financial or legal statement before you publish.</li>
+          <li>Businesses and contact details EMMA finds on the web are marked unverified and without consent until you check them.</li>
+          <li>The Pitch Jury&apos;s nine jurors are AI personas giving simulated opinions, not real people or market research.</li>
+          <li>Some platforms ask you to label AI-generated or AI-edited content. Follow each platform&apos;s rules when you post.</li>
+        </ul>
+
+        <h2>Questions or concerns</h2>
+        <p>{contact}</p>
+      </>
+    ),
+  },
+
+  security: {
+    title: "Security",
+    intro: "How EMMA protects your account and data, what you can do, and how to report a problem.",
+    body: (
+      <>
+        <h2>How we protect your data</h2>
+        <ul>
+          <li>Everything travels encrypted (HTTPS). Each business&apos;s data is separated at the database level, so one account cannot read another&apos;s.</li>
+          <li>Sign-in uses one-time email codes, Google or passkeys, so there is no EMMA password to steal.</li>
+          <li>Two-step verification is available with an authenticator app or a passkey. Once it is on, EMMA asks for it at every new sign-in.</li>
+          <li>Secret keys stay on our servers and never reach your browser. Payment card details are handled by Stripe and never touch EMMA.</li>
+          <li>Usage limits, one AI request at a time and size limits protect the service from abuse.</li>
+        </ul>
+
+        <h2>What you can do</h2>
+        <ul>
+          <li>Turn on two-step verification in Business Profile, Security.</li>
+          <li>Keep your email account secure, because sign-in codes go there.</li>
+          <li>Sign out on shared computers, and remove passkeys from devices you no longer use.</li>
+        </ul>
+
+        <h2>Report a security issue</h2>
+        <p>If you find a vulnerability, email {securityContact} with the steps to reproduce it. Please don&apos;t access other people&apos;s data, disrupt the service or share the issue publicly before we have fixed it. We aim to acknowledge reports within 3 working days and will keep you updated. We won&apos;t take action against good-faith research that follows these rules.</p>
+
+        <h2>If something goes wrong</h2>
+        <p>If a breach affects your personal data, we will notify the Office of the Data Protection Commissioner within 72 hours and tell affected users without undue delay.</p>
+      </>
+    ),
+  },
+
+  dpa: {
+    title: "Data Processing Addendum",
+    intro: `How ${COMPANY.legalName} processes the personal data your business puts into EMMA, such as your customers and leads. It forms part of the Terms of Service.`,
+    body: (
+      <>
+        <h2>Roles</h2>
+        <p>For personal data you add to your workspace about your customers, leads and contacts, your business is the <b>data controller</b> and {COMPANY.legalName} is the <b>data processor</b> under Kenya&apos;s Data Protection Act, 2019.</p>
+
+        <h2>What we do with it</h2>
+        <ul>
+          <li>We process it only to provide EMMA as you use it, and on your documented instructions.</li>
+          <li>People who work on EMMA are bound by confidentiality.</li>
+          <li>We protect it with the measures on our <a className="link" href="/legal/security">Security</a> page.</li>
+          <li>We use the sub-processors listed in our <a className="link" href="/legal/privacy">Privacy Policy</a>, under written terms with equivalent protection, and will tell you about changes in advance.</li>
+          <li>Some sub-processors are outside Kenya; we rely on the safeguards the Act requires for those transfers.</li>
+        </ul>
+
+        <h2>Helping you meet your duties</h2>
+        <ul>
+          <li>You can export or delete your workspace data at any time, which helps you answer access and deletion requests.</li>
+          <li>We will help with data subject requests and data protection impact assessments where reasonable.</li>
+          <li>We will notify you without undue delay after becoming aware of a breach affecting your data.</li>
+        </ul>
+
+        <h2>Your duties</h2>
+        <p>You confirm you have a lawful basis, such as consent, for the personal data you add, and that you will use EMMA in line with our <a className="link" href="/legal/acceptable-use">Acceptable Use Policy</a>.</p>
+
+        <h2>When you leave</h2>
+        <p>When you delete your workspace or account, we delete the personal data in it within 30 days, except where the law requires us to keep records.</p>
+
+        <h2>Contact</h2>
+        <p>{contact}</p>
       </>
     ),
   },

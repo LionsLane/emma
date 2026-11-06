@@ -10,12 +10,25 @@ const jetbrains = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], v
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:5180";
 
+const description = "EMMA is an AI marketing assistant for small businesses in Kenya. Brief her in one sentence: she plans your posts, writes them in your voice and drafts the follow-up for every lead. You approve everything. Free to start, by Lions Lane.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: { default: "EMMA · The marketing team that already knows your business", template: "%s · EMMA" },
-  description: "EMMA plans your month, writes your posts, ads and emails, and finds leads worth calling. You approve everything. From KES 0. A LionsLane product.",
+  title: { default: "EMMA: AI Marketing Assistant for Small Businesses in Kenya", template: "%s · EMMA" },
+  description,
+  applicationName: "EMMA",
+  authors: [{ name: "Lions Lane", url: "https://lionslane.co.ke" }],
+  creator: "Lions Lane",
+  publisher: "Lions Lane",
+  alternates: { canonical: "/" },
   icons: { icon: "/icon.svg" },
-  openGraph: { title: "EMMA by LionsLane", description: "The marketing team that already knows your business. From KES 0.", type: "website" },
+  openGraph: {
+    type: "website", url: "/", siteName: "EMMA by Lions Lane", locale: "en_KE",
+    title: "EMMA: the marketing team that already knows your business",
+    description: "Brief EMMA in one sentence. She plans your posts, writes them in your voice and follows up your leads. Free to start.",
+  },
+  twitter: { card: "summary_large_image", title: "EMMA by Lions Lane", description: "The AI marketing assistant for small businesses in Kenya. Free to start." },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = { themeColor: "#050914", width: "device-width", initialScale: 1 };
