@@ -20,7 +20,7 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(params.get("error") ? "That sign-in link didn't work. Try again." : null);
+  const [error, setError] = useState<string | null>(params.get("error") ? "That link has expired or was already used. Enter your email and we'll send a new code." : null);
   const codeRef = useRef<HTMLInputElement>(null);
 
   if (!CLOUD) {
