@@ -27,15 +27,22 @@ function check(name, ok, detail = "") {
   console.log(results.at(-1));
 }
 
+// Users are recorded in `users` as soon as they exist, so cleanup runs even if
+// sign-in fails halfway.
 async function makeUser(tag) {
   const email = `e2e${tag}${Date.now()}@example.com`;
-  const { data: link, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
-  if (error) throw new Error(`generateLink: ${error.message}`);
+  const { data: created, error } = await admin.auth.admin.createUser({ email, email_confirm: true });
+  if (error) throw new Error(`createUser: ${error.message}`);
+  const u = { email, id: created.user.id, token: null, db: null };
+  users.push(u);
+  const { data: link, error: e1 } = await admin.auth.admin.generateLink({ type: "magiclink", email });
+  if (e1) throw new Error(`generateLink: ${e1.message}`);
   const client = createClient(URL_, PUB, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error: e2 } = await client.auth.verifyOtp({ token_hash: link.properties.hashed_token, type: "magiclink" });
+  const { data, error: e2 } = await client.auth.verifyOtp({ token_hash: link.properties.hashed_token, type: link.properties.verification_type ?? "magiclink" });
   if (e2 || !data.session) throw new Error(`verifyOtp: ${e2?.message}`);
-  const db = createClient(URL_, PUB, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${data.session.access_token}` } } });
-  return { email, id: data.user.id, token: data.session.access_token, db };
+  u.token = data.session.access_token;
+  u.db = createClient(URL_, PUB, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${u.token}` } } });
+  return u;
 }
 
 const api = (path, { token, method = "GET", body, headers = {} } = {}) =>
@@ -60,8 +67,8 @@ try {
   check("Signed-out /app redirects to sign in", guard.status === 307 && (guard.headers.get("location") ?? "").includes("/signin"), `HTTP ${guard.status}`);
 
   // ---- accounts
-  const a = await makeUser("a"); users.push(a);
-  const b = await makeUser("b"); users.push(b);
+  const a = await makeUser("a");
+  const b = await makeUser("b");
   check("Two test users signed in", !!a.token && !!b.token);
 
   const { data: prof } = await a.db.from("profiles").select("id,is_staff").eq("id", a.id).maybeSingle();
@@ -146,11 +153,16 @@ try {
 } finally {
   // ---- account deletion (cleans up the test users)
   for (const u of users) {
-    const del = await api("/api/account", { token: u.token, method: "DELETE" });
-    const { data } = await admin.auth.admin.getUserById(u.id);
-    check(`Delete account (${u.email.slice(0, 5)}…)`, del.status === 200 && !data?.user, `HTTP ${del.status}`);
-    if (data?.user) await admin.auth.admin.deleteUser(u.id); // never leave test users behind
+    if (u.token) {
+      const del = await api("/api/account", { token: u.token, method: "DELETE" });
+      const { data } = await admin.auth.admin.getUserById(u.id);
+      check(`Delete account (${u.email.slice(0, 5)}…)`, del.status === 200 && !data?.user, `HTTP ${del.status}`);
+    }
+    await admin.auth.admin.deleteUser(u.id).catch(() => {}); // never leave test users behind
   }
+  // Sweep any test users left by an earlier crashed run.
+  const { data: list } = await admin.auth.admin.listUsers({ perPage: 200 });
+  for (const x of list?.users ?? []) if (/^e2e[ab]\d+@example\.com$/.test(x.email ?? "")) await admin.auth.admin.deleteUser(x.id);
   console.log(`\n${pass} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 }
