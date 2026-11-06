@@ -1,0 +1,22 @@
+// Same B-18 tokens as the web app (src/app/globals.css). Contrast-checked.
+export const T = {
+  bg: "#050914",
+  surface: "#111b33",
+  surfaceSolid: "#0e1630",
+  line: "rgba(148,170,220,0.14)",
+  text: "#e8eeff",
+  text2: "#b4c0de",
+  muted: "#8191b8",
+  faint: "#7a88ad",
+  primary: "#3d7bff",
+  primaryStrong: "#3162cc",
+  accent: "#22e6d3",
+  aiFrom: "#7c3aed",
+  aiTo: "#db2777",
+  aiText: "#f472b6",
+  ok: "#34d399",
+  warn: "#fbbf24",
+  risk: "#f87171",
+  info: "#60a5fa",
+  radius: 14,
+};

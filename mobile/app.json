@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "EMMA",
+    "slug": "emma",
+    "version": "1.0.0",
+    "scheme": "emma",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#050914",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "co.lionslane.emma",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "co.lionslane.emma",
+      "adaptiveIcon": {
+        "backgroundColor": "#050914",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
