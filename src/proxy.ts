@@ -54,9 +54,30 @@ export async function proxy(request: NextRequest) {
     to.searchParams.set("next", path);
     return NextResponse.redirect(to);
   }
-  if (path === "/signin" && signedIn) {
+
+  // Two-step verification: someone with a verified second factor who has only done step one
+  // goes to /signin/verify before any app page. The session cookie already lists the factors.
+  let needsSecondStep = false;
+  if (signedIn && data?.claims?.aal !== "aal2" && (path.startsWith("/app") || path.startsWith("/signin"))) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    needsSecondStep = aal?.nextLevel === "aal2";
+  }
+  if (needsSecondStep && path !== "/signin/verify") {
+    const to = request.nextUrl.clone();
+    to.pathname = "/signin/verify";
+    to.search = "";
+    to.searchParams.set("next", path.startsWith("/app") ? path : "/app");
+    return NextResponse.redirect(to);
+  }
+  if (signedIn && !needsSecondStep && path.startsWith("/signin")) {
     const to = request.nextUrl.clone();
     to.pathname = "/app";
+    to.search = "";
+    return NextResponse.redirect(to);
+  }
+  if (!signedIn && path === "/signin/verify") {
+    const to = request.nextUrl.clone();
+    to.pathname = "/signin";
     to.search = "";
     return NextResponse.redirect(to);
   }
@@ -64,5 +85,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/signin", "/api/:path*"],
+  matcher: ["/app/:path*", "/signin", "/signin/verify", "/api/:path*"],
 };

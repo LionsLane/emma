@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Orb } from "@/components/Orb";
 import { CLOUD } from "@/lib/supabase/env";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 // Only allow same-site relative redirects after sign-in (no open redirects).
-function safeNext(raw: string | null): string {
+export function safeNext(raw: string | null): string {
   return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/app";
 }
 
@@ -22,6 +22,8 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(params.get("error") ? "That link has expired or was already used. Enter your email and we'll send a new code." : null);
   const codeRef = useRef<HTMLInputElement>(null);
+  const [canPasskey, setCanPasskey] = useState(false);
+  useEffect(() => { setCanPasskey(typeof window !== "undefined" && "PublicKeyCredential" in window); }, []);
 
   if (!CLOUD) {
     return (
@@ -63,6 +65,16 @@ export function SignIn() {
     router.refresh();
   };
 
+  const passkey = async () => {
+    setError(null);
+    setBusy(true);
+    const { error } = await sb.auth.signInWithPasskey();
+    setBusy(false);
+    if (error) { setError("That passkey didn't work. Try again, or use an email code."); return; }
+    router.replace(next);
+    router.refresh();
+  };
+
   const google = async () => {
     setError(null);
     const { error } = await sb.auth.signInWithOAuth({
@@ -84,6 +96,7 @@ export function SignIn() {
           <button className="btn ai" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a code"}</button>
           <div className="auth-or"><span>or</span></div>
           <button className="btn" type="button" onClick={google}><GoogleMark />Continue with Google</button>
+          {canPasskey && <button className="btn" type="button" onClick={passkey} disabled={busy}>Sign in with a passkey</button>}
         </form>
       ) : (
         <form onSubmit={verify} className="stack" style={{ gap: 14 }} noValidate>
@@ -105,7 +118,7 @@ export function SignIn() {
   );
 }
 
-function AuthFrame({ children }: { children: React.ReactNode }) {
+export function AuthFrame({ children }: { children: React.ReactNode }) {
   return (
     <main className="auth">
       <Link href="/" className="auth-brand" aria-label="EMMA home"><Orb size={44} /><span className="brand-word">EMMA</span></Link>

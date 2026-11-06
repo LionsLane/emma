@@ -10,6 +10,7 @@ import { useHealth } from "@/components/health";
 import { IconPlus, IconTrash } from "@/components/icons";
 import { usageCostUSD } from "@/lib/jury";
 import { num } from "@/lib/metrics";
+import { SecurityPanel } from "@/components/Security";
 
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
@@ -139,6 +140,8 @@ export default function Settings() {
       </Panel>
 
       <UsageAndData />
+
+      {mode === "cloud" && <SecurityPanel />}
 
       <div className="grid cols-2">
         <Panel title="Your data">

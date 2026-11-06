@@ -25,6 +25,11 @@ export async function requireUser(req: Request): Promise<AuthedUser | Response> 
   const { data, error } = await db.auth.getClaims(token ?? undefined);
   const sub = data?.claims?.sub;
   if (error || !sub) return fail(401, "Please sign in again.");
+  // Two-step verification: a user with a verified second factor must have used it (aal2).
+  if (data.claims.aal !== "aal2") {
+    const { data: aal } = await db.auth.mfa.getAuthenticatorAssuranceLevel(token ?? undefined);
+    if (aal?.nextLevel === "aal2") return fail(401, "Finish two-step verification to continue.", { mfa: true });
+  }
   return { id: sub, email: (data.claims.email as string | undefined) ?? null, db, token };
 }
 
