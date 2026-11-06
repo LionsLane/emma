@@ -40,8 +40,9 @@ export async function runAgent(opts: {
   const tools: Anthropic.Beta.BetaToolUnion[] = [...(CLIENT_TOOLS as unknown as Anthropic.Beta.BetaToolUnion[])];
   if (opts.searchesLeft > 0) {
     tools.push({
+      // No user_location: the web search tool rejects country code KE. The client context already
+      // tells EMMA the business's location, so she adds it to queries herself.
       type: "web_search_20260209", name: "web_search", max_uses: Math.min(5, opts.searchesLeft),
-      user_location: { type: "approximate", city: "Nairobi", country: "KE", timezone: "Africa/Nairobi" },
     } as Anthropic.Beta.BetaToolUnion);
   }
 
