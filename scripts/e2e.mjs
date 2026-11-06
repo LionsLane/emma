@@ -136,6 +136,7 @@ try {
     check("Stream has text and finishes", types.includes("text") && types.includes("done") && !types.includes("error"), types.join(","));
     const prop = events.find((e) => e.type === "proposal")?.proposal;
     check("EMMA proposed a card", !!prop, prop ? `${prop.kind}: ${prop.title}` : "no proposal");
+    if (!prop) console.log("      EMMA said: " + events.filter((e) => e.type === "text").map((e) => e.text).join("").slice(0, 600).replace(/\n+/g, " "));
     if (prop) {
       const ap = await api(`/api/proposals/${prop.id}`, { token: a.token, method: "POST", body: { action: "approve" } });
       const apBody = await ap.json();
