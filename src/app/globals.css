@@ -615,3 +615,5 @@ table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
 .skip:focus { left: 8px; }
 
 @media (pointer: coarse) { .btn, .tabs button, .select, .input { min-height: 44px; } .btn.sm { min-height: 40px; } }
+
+.gsi-wrap { display: flex; flex-direction: column; gap: 8px; }

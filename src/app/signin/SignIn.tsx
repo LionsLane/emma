@@ -101,7 +101,7 @@ export function SignIn() {
           </div>
           <button className="btn ai" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a code"}</button>
           <div className="auth-or"><span>or</span></div>
-          <GoogleSignIn next={next} onError={setError} fallback={<button className="btn" type="button" onClick={google}><GoogleMark />Continue with Google</button>} />
+          <GoogleSignIn next={next} onError={setError} redirect={() => void google()} fallback={<button className="btn" type="button" onClick={google}><GoogleMark />Continue with Google</button>} />
           {canPasskey && <button className="btn" type="button" onClick={passkey} disabled={busy}>Sign in with a passkey</button>}
         </form>
       ) : (
@@ -150,7 +150,7 @@ async function sha256Hex(text: string) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function GoogleSignIn({ next, onError, fallback }: { next: string; onError: (m: string | null) => void; fallback: React.ReactNode }) {
+function GoogleSignIn({ next, onError, fallback, redirect }: { next: string; onError: (m: string | null) => void; fallback: React.ReactNode; redirect: () => void }) {
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "fallback" | "busy">(GOOGLE_CLIENT_ID ? "loading" : "fallback");
@@ -169,7 +169,8 @@ function GoogleSignIn({ next, onError, fallback }: { next: string; onError: (m: 
           client_id: GOOGLE_CLIENT_ID,
           nonce: hashed,
           ux_mode: "popup",
-          use_fedcm_for_button: true,
+          // Classic pop-up, not FedCM: FedCM fails in some embedded and in-app browsers.
+          use_fedcm_for_button: false,
           itp_support: true,
           context: "signin",
           callback: async ({ credential }) => {
@@ -204,6 +205,7 @@ function GoogleSignIn({ next, onError, fallback }: { next: string; onError: (m: 
       <div ref={box} style={{ display: state === "busy" ? "none" : "flex", justifyContent: "center", minHeight: 44 }} />
       {state === "loading" && <div className="small muted" style={{ textAlign: "center" }}>Loading Google sign-in…</div>}
       {state === "busy" && <div className="small muted" style={{ textAlign: "center" }}>Signing you in with Google…</div>}
+      {state === "ready" && <button type="button" className="btn ghost sm" style={{ alignSelf: "center" }} onClick={redirect}>Google not opening? Try another way</button>}
     </div>
   );
 }
