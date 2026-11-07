@@ -8,7 +8,7 @@ import { Orb } from "./Orb";
 import { PageSkeleton, Sheet, Sk } from "./ui";
 import { Composer, QuickCommands, Thread } from "./Chat";
 import { useHealth } from "./health";
-import { AccountMenu, BILLING_NAV, CommandPalette, JURY_NAV, NAV, PROFILE_NAV, TabBar, Toasts, UpgradeModal, UsageMeter } from "./Chrome";
+import { AccountMenu, BILLING_NAV, CommandPalette, JURY_NAV, NAV, PROFILE_NAV, TabBar, Toasts, UpgradeModal, UsageMeter, UserMenu } from "./Chrome";
 import { IconChat, IconMenu, IconRefresh, IconSearch } from "./icons";
 
 const TITLES: Record<string, string> = Object.fromEntries(
@@ -132,6 +132,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <div className="state"><span className={`live-dot ${dotClass}`} />{stateLabel}</div>
             </div>
           </div>
+          <UserMenu />
         </header>
         <main id="main" className="page" key={pathname} tabIndex={-1}>{children}</main>
       </div>

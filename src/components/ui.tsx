@@ -4,9 +4,9 @@ import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { IconAlert, IconCheck, IconClose } from "./icons";
 import type { CheckStatus } from "@/lib/types";
 
-export function Panel({ title, hint, right, children, className = "" }: { title?: ReactNode; hint?: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({ title, hint, right, children, className = "", id }: { title?: ReactNode; hint?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className={`glass panel ${className}`}>
+    <section id={id} className={`glass panel ${className}`}>
       {(title || right) && (
         <div className="panel-head">
           {title && <h2>{title}</h2>}

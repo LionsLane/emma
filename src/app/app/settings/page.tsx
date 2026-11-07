@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useEmma, uid } from "@/lib/store";
 import { blankWorkspace, seedWorkspace } from "@/lib/seed";
 import type { ClientProfile, KeyDate, Offering, Partner } from "@/lib/types";
@@ -11,6 +11,7 @@ import { IconPlus, IconTrash } from "@/components/icons";
 import { usageCostUSD } from "@/lib/jury";
 import { num } from "@/lib/metrics";
 import { SecurityPanel } from "@/components/Security";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
@@ -46,9 +47,27 @@ export default function Settings() {
 
   const confirmThen = (q: string, fn: () => void) => { if (window.confirm(q)) fn(); };
 
+  // Links like /app/settings#account land on the right panel, even when it renders a moment later.
+  useEffect(() => {
+    const go = () => {
+      const id = window.location.hash.slice(1);
+      if (!id) return;
+      let tries = 0;
+      const t = window.setInterval(() => {
+        const el = document.getElementById(id);
+        if (el || ++tries > 20) { window.clearInterval(t); el?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      }, 100);
+    };
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+  }, []);
+
   return (
     <div className="stack">
-      <Panel title="Identity">
+      {mode === "cloud" && <AccountPanel />}
+
+      <Panel id="business" title="Your business">
         <div className="grid cols-3">
           <Field label="Business name"><input className="input" value={p.name} onChange={(e) => update({ name: e.target.value })} /></Field>
           <Field label="Industry"><input className="input" value={p.industry} onChange={(e) => update({ industry: e.target.value })} /></Field>
@@ -172,6 +191,67 @@ export default function Settings() {
         )}
       </div>
     </div>
+  );
+}
+
+const PROVIDER_LABEL: Record<string, string> = { email: "Email code", google: "Google" };
+
+function AccountPanel() {
+  const account = useEmma((s) => s.account);
+  const refreshAccount = useEmma((s) => s.refreshAccount);
+  const signOut = useEmma((s) => s.signOut);
+  const toast = useEmma((s) => s.toast);
+  const [name, setName] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"" | "save" | "all">("");
+  const [methods, setMethods] = useState<string[]>([]);
+  useEffect(() => {
+    void supabaseBrowser()?.auth.getUser().then(({ data }) => {
+      const ids = data.user?.identities?.map((i) => i.provider) ?? [];
+      setMethods([...new Set(ids)]);
+    });
+  }, []);
+  if (!account) return null;
+  const value = name ?? account.user.name;
+  const dirty = value.trim() !== account.user.name;
+
+  const save = async () => {
+    const full = value.trim().slice(0, 80);
+    setBusy("save");
+    const { error } = await supabaseBrowser()!.from("profiles").update({ full_name: full }).eq("id", account.user.id);
+    if (error) { setBusy(""); toast("Couldn't save your name. Try again.", "risk"); return; }
+    await refreshAccount();
+    setName(null);
+    setBusy("");
+    toast("Profile saved.");
+  };
+
+  const signOutAll = async () => {
+    if (!window.confirm("Log out of EMMA on every device, including this one?")) return;
+    setBusy("all");
+    await supabaseBrowser()?.auth.signOut({ scope: "global" }).catch(() => undefined);
+    await signOut();
+  };
+
+  return (
+    <Panel id="account" title="Your profile" right={<span className="chip">{account.plan.name} plan</span>}>
+      <div className="stack" style={{ gap: 14 }}>
+        <div className="grid cols-2">
+          <Field label="Your name">
+            <input className="input" aria-label="Your name" value={value} maxLength={80} autoComplete="name" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && dirty) void save(); }} />
+          </Field>
+          <Field label="Email" help="This is where your sign-in codes go.">
+            <input className="input" aria-label="Email" value={account.user.email ?? ""} readOnly aria-readonly="true" />
+          </Field>
+        </div>
+        <div className="small muted">Signs in with: {methods.length ? methods.map((m) => PROVIDER_LABEL[m] ?? m).join(", ") : "…"}</div>
+        <div className="row">
+          <button className="btn primary sm" onClick={save} disabled={!dirty || busy !== ""}>{busy === "save" ? "Saving…" : "Save profile"}</button>
+          <span className="spacer" style={{ flex: 1 }} />
+          <button className="btn sm" onClick={() => { setBusy("all"); void signOut(); }} disabled={busy !== ""}>Log out</button>
+          <button className="btn ghost sm" onClick={signOutAll} disabled={busy !== ""}>{busy === "all" ? "Logging out…" : "Log out everywhere"}</button>
+        </div>
+      </div>
+    </Panel>
   );
 }
 

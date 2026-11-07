@@ -104,7 +104,7 @@ export function SecurityPanel() {
 
   const protectedNow = factors.length > 0;
   return (
-    <Panel title="Security" right={<span className={`chip ${protectedNow ? "ok" : "warn"}`}>{protectedNow ? "Two-step on" : "Two-step off"}</span>}>
+    <Panel id="security" title="Sign-in security" right={<span className={`chip ${protectedNow ? "ok" : "warn"}`}>{protectedNow ? "Two-step on" : "Two-step off"}</span>}>
       <div className="stack" id="security">
         {!protectedNow && <p className="small" style={{ margin: 0 }}>Add a second step so nobody can open your workspace with just your email.</p>}
 

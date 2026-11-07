@@ -247,7 +247,57 @@ export function AccountMenu() {
           <Link role="menuitem" href={PROFILE_NAV.href} onClick={() => setOpen(false)}><IconSettings />Business profile</Link>
           {mode === "cloud" && <Link role="menuitem" href={BILLING_NAV.href} onClick={() => setOpen(false)}><IconBolt />Plan & billing</Link>}
           <Link role="menuitem" href="/legal/privacy" onClick={() => setOpen(false)}><IconShield />Privacy</Link>
-          {mode === "cloud" && (<><hr /><button role="menuitem" onClick={() => void signOut()}><IconClose />Sign out</button></>)}
+          {mode === "cloud" && (<><hr /><button role="menuitem" onClick={() => void signOut()}><IconClose />Log out</button></>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- top bar account button
+
+const initials = (name: string, email: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0]?.[0] ?? email[0] ?? "Y").toUpperCase();
+};
+
+export function UserMenu() {
+  const account = useEmma((s) => s.account);
+  const signOut = useEmma((s) => s.signOut);
+  const mode = useEmma((s) => s.mode);
+  const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  if (mode !== "cloud" || !account) return null;
+  const { name, email } = account.user;
+  const close = () => setOpen(false);
+  return (
+    <div className="menu-wrap" ref={ref}>
+      <button className="avatar-btn" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} aria-label="Your account">
+        {initials(name, email ?? "")}
+      </button>
+      {open && (
+        <div className="menu" role="menu">
+          <div className="menu-id">
+            <div className="name">{name || "Your account"}</div>
+            <div className="sub">{email}</div>
+          </div>
+          <hr />
+          <Link role="menuitem" href="/app/settings#account" onClick={close}><IconUsers />Your profile</Link>
+          <Link role="menuitem" href="/app/settings#business" onClick={close}><IconSettings />Business profile</Link>
+          <Link role="menuitem" href="/app/settings#security" onClick={close}><IconShield />Sign-in security</Link>
+          <Link role="menuitem" href={BILLING_NAV.href} onClick={close}><IconBolt />Plan & billing</Link>
+          <hr />
+          <button role="menuitem" disabled={leaving} onClick={() => { setLeaving(true); void signOut(); }}><IconClose />{leaving ? "Logging out…" : "Log out"}</button>
         </div>
       )}
     </div>
