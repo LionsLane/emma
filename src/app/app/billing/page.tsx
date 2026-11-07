@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEmma } from "@/lib/store";
+import { COMPANY } from "@/lib/company";
 import { PLANS, formatKES } from "@/lib/plans";
 import { Modal, Stat } from "@/components/ui";
 import { PlanCards } from "@/components/Chrome";
@@ -94,7 +95,7 @@ function Billing() {
       </div>
       {p.provider === "stripe" && <div className="row"><button className="btn sm" onClick={manageCard}>Manage card subscription</button></div>}
       <PlanCards current={p.id} onPick={setCheckout} />
-      <p className="small faint" style={{ margin: 0 }}>Cancel any time; you keep your plan until the period ends. See the <a className="link" href="/legal/refunds">refund policy</a>.</p>
+      <p className="small faint" style={{ margin: 0 }}>Cancel any time; you keep your plan until the period ends. See the <a className="link" href="/legal/refunds">refund policy</a>.{COMPANY.billingEmail && <> Payment questions: <a className="link" href={`mailto:${COMPANY.billingEmail}`}>{COMPANY.billingEmail}</a>.</>}</p>
       <Checkout plan={checkout} onClose={() => setCheckout(null)} />
     </div>
   );

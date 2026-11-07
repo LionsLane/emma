@@ -9,6 +9,8 @@ export const UPDATED = "7 November 2026";
 
 const mail = (addr: string) => <a className="link" href={`mailto:${addr}`}>{addr}</a>;
 const securityContact = COMPANY.securityEmail ? mail(COMPANY.securityEmail) : "the contact details on our website";
+const supportContact = COMPANY.email ? mail(COMPANY.email) : "the contact details on our website";
+const billingContact = COMPANY.billingEmail ? mail(COMPANY.billingEmail) : "the contact details on our website";
 
 const contact = (
   <>
@@ -125,7 +127,7 @@ export const DOCS: Record<string, LegalDoc> = {
         <p>These terms are governed by the laws of Kenya, and the courts of Kenya have jurisdiction.</p>
 
         <h2>Contact</h2>
-        <p>{contact}</p>
+        <p>Questions about EMMA or these terms: {supportContact}{COMPANY.address ? `, or write to ${COMPANY.legalName}, ${COMPANY.address}` : ""}. Payments: {billingContact}. Privacy: {contact}.</p>
       </>
     ),
   },
@@ -181,7 +183,7 @@ export const DOCS: Record<string, LegalDoc> = {
         <p>If you were charged and your plan didn&apos;t activate, or you were charged twice, we&apos;ll fix it or refund you in full.</p>
 
         <h2>How to ask</h2>
-        <p>Contact us at {contact} with your account email and the M-Pesa receipt or card receipt. We aim to reply within 2 working days and refund within 7.</p>
+        <p>Email {billingContact} with your account email and the M-Pesa, Paystack or card receipt. We aim to reply within 2 working days and refund within 7.</p>
       </>
     ),
   },
