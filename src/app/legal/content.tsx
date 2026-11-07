@@ -55,7 +55,7 @@ export const DOCS: Record<string, LegalDoc> = {
           <thead><tr><th>Provider</th><th>What for</th><th>Where</th></tr></thead>
           <tbody>
             <tr><td>Supabase</td><td>Database and sign-in</td><td>Frankfurt, Germany (EU)</td></tr>
-            <tr><td>Vercel</td><td>Hosting the website and API, and anonymous page statistics</td><td>Global</td></tr>
+            <tr><td>Vercel</td><td>Hosting the website and API, and anonymous page statistics, only if you allow analytics</td><td>Global</td></tr>
             <tr><td>Brevo</td><td>Sending sign-in codes and account emails</td><td>European Union</td></tr>
             <tr><td>Cloudflare</td><td>Our domain name and forwarding of our support email addresses</td><td>Global</td></tr>
             <tr><td>Google</td><td>Google sign-in, only if you choose it; Google Analytics page statistics, only if you allow analytics cookies</td><td>Global</td></tr>
@@ -134,7 +134,7 @@ export const DOCS: Record<string, LegalDoc> = {
 
   cookies: {
     title: "Cookie Notice",
-    intro: "Which cookies and browser storage EMMA uses, and why there's no cookie banner.",
+    intro: "Which cookies and browser storage EMMA uses, and what we ask before any analytics runs.",
     body: (
       <>
         <h2>Strictly necessary only</h2>
@@ -148,7 +148,7 @@ export const DOCS: Record<string, LegalDoc> = {
         <p>These are needed for the service to work, so they don&apos;t require consent.</p>
 
         <h2>Analytics cookies, only if you allow them</h2>
-        <p>We ask before setting any analytics cookie. If you tap <b>Allow</b>, Google Analytics sets the cookies below so we can see which pages help people. If you tap <b>No thanks</b>, or don&apos;t choose, Google&apos;s analytics script never loads. Advertising features, Google signals and ad personalisation are switched off.</p>
+        <p>We ask before any analytics runs. If you tap <b>Allow</b>, Google Analytics sets the cookies below and Vercel Web Analytics (anonymous, no cookies) counts page views, so we can see which pages help people. If you tap <b>No thanks</b>, or don&apos;t choose, neither analytics script loads and nothing about your visit is sent to either. Advertising features, Google signals and ad personalisation are switched off.</p>
         <table className="legal-table">
           <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Lasts</th></tr></thead>
           <tbody>
@@ -157,7 +157,10 @@ export const DOCS: Record<string, LegalDoc> = {
             <tr><td><code>emma-consent</code></td><td>Local storage</td><td>Remembers your cookie choice</td><td>Until you clear it</td></tr>
           </tbody>
         </table>
-        <p>You can change your mind at any time with <b>Cookie settings</b> at the bottom of our pages. Choosing No thanks stops EMMA&apos;s analytics and removes EMMA&apos;s own cookie (<code>_ga_E9PQVEK9RS</code>). The shared <code>_ga</code> cookie stays only if you allowed analytics on lionslane.co.ke; change that on the Lions Lane website. We also use Vercel Web Analytics, which is anonymous and uses no cookies.</p>
+        <p>You can change your mind at any time with <b>Cookie settings</b> at the bottom of our pages. Choosing No thanks stops EMMA&apos;s analytics and removes both Google Analytics cookies (<code>_ga</code> and <code>_ga_E9PQVEK9RS</code>). The Lions Lane website (lionslane.co.ke) asks its own question; if you allowed analytics there, it sets a new <code>_ga</code> on your next visit to it.</p>
+
+        <h2>Google sign-in</h2>
+        <p>Google&apos;s sign-in script loads only when you tap <b>Continue with Google</b>. Opening the sign-in page sends nothing to Google.</p>
 
         <h2>No advertising cookies</h2>
         <p>We don&apos;t use advertising or social media cookies.</p>

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { Consent } from "@/components/Consent";
 import "./globals.css";
 import "./site.css";
@@ -41,9 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable}`}>
       <body>
         {children}
-        {/* Cookieless, anonymous page analytics (no consent banner needed). */}
-        <Analytics />
-        {/* Google Analytics loads only after the visitor allows it. */}
+        {/* All page analytics (Google and Vercel) load only after the visitor taps Allow. */}
         <Consent />
       </body>
     </html>
