@@ -20,7 +20,13 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(params.get("error") ? "That link has expired or was already used. Enter your email and we'll send a new code." : null);
+  const [error, setError] = useState<string | null>(() => {
+    const e = params.get("error");
+    if (!e) return null;
+    if (e === "oauth") return "Google sign-in didn't finish. Try again, or use your email to get a code.";
+    if (e === "browser") return "Google sign-in has to finish in the same browser it started in. Try again here, or use your email to get a code.";
+    return "That link has expired or was already used. Enter your email and we'll send a new code.";
+  });
   const codeRef = useRef<HTMLInputElement>(null);
   const [canPasskey, setCanPasskey] = useState(false);
   useEffect(() => { setCanPasskey(typeof window !== "undefined" && "PublicKeyCredential" in window); }, []);

@@ -16,3 +16,6 @@ next-env.d.ts
 
 # Supabase CLI local state
 supabase/.temp
+
+# Claude Code plugin state
+.omc/
