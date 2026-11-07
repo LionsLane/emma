@@ -40,20 +40,27 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 
 **Don't change in phase 6:** API shapes, database schema, plan limits, security controls.
 
-## 3a. Live setup (6 November 2026)
+## 3a. Live setup (updated 7 November 2026)
 
 | Part | Where | State |
 |---|---|---|
-| Web app | Vercel project `emma` (account stevenkamau700-4495), https://emma.lionslane.co.ke (fallback https://emma-omega-two.vercel.app) | Live |
+| Web app | Vercel project `emma` (account stevenkamau700-4495), https://emma.lionslane.co.ke (fallback https://emma-omega-two.vercel.app); repo LionsLane/emma; Next.js 16.4.3 (security patch) | Live |
 | Domain | Cloudflare zone lionslane.co.ke: CNAME `emma` to `5c9a6e443203e4ec.vercel-dns-017.com`, DNS only | Live, HTTPS |
-| Database and sign-in | Supabase project **EMMA**, ref `vxxybllgluasxtohnntu`, Frankfurt; migration applied; Site URL emma.lionslane.co.ke | Live |
-| Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke>; Supabase SMTP form filled except the password | Waiting for the Brevo SMTP key |
-| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ on the Lions Lane mail router (LionsLane/lionslane PR #17) | Waiting for merge and the Cloudflare worker deploy |
-| Lions Lane website | EMMA tab, menu item, footer link and /emma page (LionsLane/lionslane PR #17) | Waiting for merge and deploy |
-| AI | Claude Console key `EMMA production` (promotional credit USD 99.72 until 18 Mar 2027) | Waiting for the key in `.env.local` |
-| Cards | Stripe account **EMMA** `acct_1UYoy0Dt4BY5EyCm` (United States, test mode). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Waiting for the secret key and webhook signing secret; live payments need Stripe business verification |
-| M-Pesa | Safaricom Daraja | Waiting for the app keys |
-| Live test | `node scripts/e2e.mjs` (27 checks) and `node scripts/e2e.mjs --ai` | 27 of 27 passed on 6 Nov 2026 |
+| Database and sign-in | Supabase project **EMMA**, ref `vxxybllgluasxtohnntu`, Frankfurt; migrations applied (incl. `paystack_payments`) | Live |
+| Sign-in | Email code, email link (`/auth/confirm`), passkeys, Google (own GSI button, pop-up, redirect fallback; Google Cloud project EMMA, client "EMMA web"), two-step (authenticator, passkey) | Live; Google tested in Chrome with two accounts |
+| Account screens | Initials button (top right): Your profile, Business profile, Sign-in security, Plan & billing, Log out; Log out on the setup screen | Live |
+| Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke> | Live |
+| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ in `infra/mailrouter/worker.js` (LionsLane/lionslane) | Waiting for the owner to paste the Worker code in Cloudflare and Deploy |
+| Lions Lane website | EMMA tab, menu item, footer link and /emma page | Live |
+| AI | Claude Console key `EMMA production` | Live |
+| Cards | Stripe account **EMMA** (test mode, staff only). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Live for staff tests; customers need Stripe verification |
+| Paystack | Code live (init, verify, signed webhook); account created in test mode | Waiting for `PAYSTACK_SECRET_KEY` (Desktop button 9), webhook URL in the dashboard, then compliance to go live |
+| M-Pesa | Daraja sandbox app "EMMA" (174379), staff only | Sandbox tested; go-live waits for a Till or PayBill |
+| Search | Search Console URL-prefix property verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Bing Webmaster import waits for the owner's sign-in |
+| Analytics | Vercel Web Analytics (cookieless); GA4 property EMMA `G-E9PQVEK9RS`, loaded only after consent (`src/components/Consent.tsx`) | Live |
+| Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
+
+Still open: Kopo Kopo, Daraja go-live, EMMA on the Lions Lane Google Business Profile, Ahrefs, Google brand verification (shows "EMMA" on Google's screen).
 
 ## 3. Phase 7: Deploy (owner-supplied items first)
 

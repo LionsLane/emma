@@ -1556,6 +1556,15 @@ Called by Safaricom. Always answers `{ ResultCode: 0, ResultDesc: "Accepted" }`.
 #### `POST /api/billing/stripe/portal`
 → `{ url }` for the customer portal. 404 if no card subscription.
 
+#### `POST /api/billing/paystack/init`
+Auth. `{ plan: "pro" | "max" }` → `{ url }` (checkout.paystack.com). 503 when Paystack isn't set up, or test keys for a non-staff user in production. 429 after 5 checkouts in 10 minutes.
+
+#### `GET /api/billing/paystack/verify?reference=emma-<uuid>`
+Auth, owner of the payment only. → `{ status: "pending" | "paid" | "failed" }`, settling through Paystack's verify API.
+
+#### `POST /api/billing/paystack/webhook`
+Paystack only. Raw body ≤ 200 KB, `x-paystack-signature` = HMAC SHA512 with `PAYSTACK_SECRET_KEY`. `charge.success` → `settlePaystack` (re-verifies with Paystack). Returns 500 on settle failure so Paystack retries.
+
 #### `POST /api/billing/stripe/webhook`
 Stripe only. Raw body ≤ 512 KB, signature verified with `STRIPE_WEBHOOK_SECRET`. Handles `checkout.session.completed`, `customer.subscription.created|updated|deleted` → `syncStripeSubscription` (period end read from the subscription item). Returns 500 on handler failure so Stripe retries.
 
@@ -1769,10 +1778,13 @@ Most users won't reach the cap; average margin will be higher. Free users cost �
 | Method | Model | Renewal | Plan active when |
 |---|---|---|---|
 | **M-Pesa** (Daraja STK push) | Prepaid 30 days | Manual: pay again (reminder 3 days before, v1.1) | STK query confirms payment and amount |
+| **Paystack** (hosted checkout: M-Pesa or card, KES) | Prepaid 30 days | Manual: pay again | Paystack verify API confirms success, KES and amount |
 | **Card** (Stripe Checkout, KES prices) | Subscription | Automatic monthly | Signed webhook lands |
 | Manual (LionsLane grants) | SQL by staff | — | Immediately |
 
-**Stripe and Kenya:** Stripe doesn't onboard Kenya-registered businesses directly. Options: a supported entity, or swap the card processor for **Paystack** or **Flutterwave** (both support KES cards and M-Pesa). The card flow is one module (`billing.ts`), so the swap touches checkout, portal and webhook only. Decision owner: LionsLane.
+**Stripe and Kenya:** Stripe doesn't onboard Kenya-registered businesses directly, so Stripe runs on a test account and **Paystack** (chosen 7 Nov 2026: free to open, KES, M-Pesa and cards) is the live route while Daraja waits for a Till or PayBill.
+
+**Which methods a customer sees:** `GET /api/account` returns `payments: { mpesa, paystack, card }`. A method shows only when its keys are set, and test keys (Stripe `sk_test_`, Daraja sandbox, Paystack `sk_test_`) count only for staff in production. With none open, checkout says payments open once the accounts are verified.
 
 ### 3. M-Pesa flow
 ```
@@ -1790,6 +1802,12 @@ Browser: polls GET /status every 4 s × 30 ─▶ paid → "You're on Pro until 
 - Paying while still active extends from the current end date (no lost days).
 - Upgrading Pro → Max via M-Pesa: the new 30 days are Max; remaining Pro days aren't refunded in v1 (stated on the checkout sheet).
 - Sandbox: Daraja test credentials and the sandbox phone. Production needs Lipa na M-Pesa Online on a PayBill or Till (`MPESA_TRANSACTION_TYPE=CustomerBuyGoodsOnline`, `MPESA_PARTYB=<till>` for a Till).
+
+### 3a. Paystack flow
+1. `POST /api/billing/paystack/init { plan }`: our row first (`paystack_payments`, reference `emma-<uuid>`, amount from `PLANS`), then Paystack `transaction/initialize` (amount × 100, `KES`, channels `mobile_money` and `card`, callback `/app/billing?paystack=1`). Max 5 checkouts per user per 10 minutes.
+2. The customer pays on `checkout.paystack.com`; Paystack sends them back with `?reference=`.
+3. `GET /api/billing/paystack/verify?reference=` (owner only) and the signed webhook `POST /api/billing/paystack/webhook` (`charge.success`, HMAC SHA512 of the raw body with the secret key) both call `settlePaystack`, which asks Paystack's verify API, requires `success`, `KES` and the exact amount, claims the row once (`pending → paid`), then `extendPlan` adds 30 days.
+4. Paystack dashboard setting: webhook URL `https://emma.lionslane.co.ke/api/billing/paystack/webhook`. Key: `PAYSTACK_SECRET_KEY` (Desktop button 9, then Vercel env).
 
 ### 4. Card flow (Stripe)
 ```
@@ -1869,7 +1887,8 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 ### 3. Controls by layer
 
 #### Identity and sessions
-- Supabase Auth: email OTP (6 digits) and Google on web. `getClaims()` verifies the JWT signature on every API call.
+- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. `getClaims()` verifies the JWT signature on every API call.
+- Two-step: a user whose session is `aal1` is refused by every API (`401 {mfa:true}`) when Supabase's admin API lists a verified factor for them. The factor list never comes from the session cookie, which the browser can edit; `src/proxy.ts` uses the cookie only to steer screens.
 - HttpOnly cookies refreshed by `src/proxy.ts`; mobile stores the session in expo-sqlite-backed localStorage and sends a Bearer token.
 - `user_metadata` is never used for authorisation; staff is `profiles.is_staff`, server-only.
 - OAuth callback accepts only same-site `next` paths (no open redirects).
@@ -2179,20 +2198,27 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 
 **Don't change in phase 6:** API shapes, database schema, plan limits, security controls.
 
-### 3a. Live setup (6 November 2026)
+### 3a. Live setup (updated 7 November 2026)
 
 | Part | Where | State |
 |---|---|---|
-| Web app | Vercel project `emma` (account stevenkamau700-4495), https://emma.lionslane.co.ke (fallback https://emma-omega-two.vercel.app) | Live |
+| Web app | Vercel project `emma` (account stevenkamau700-4495), https://emma.lionslane.co.ke (fallback https://emma-omega-two.vercel.app); repo LionsLane/emma; Next.js 16.4.3 (security patch) | Live |
 | Domain | Cloudflare zone lionslane.co.ke: CNAME `emma` to `5c9a6e443203e4ec.vercel-dns-017.com`, DNS only | Live, HTTPS |
-| Database and sign-in | Supabase project **EMMA**, ref `vxxybllgluasxtohnntu`, Frankfurt; migration applied; Site URL emma.lionslane.co.ke | Live |
-| Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke>; Supabase SMTP form filled except the password | Waiting for the Brevo SMTP key |
-| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ on the Lions Lane mail router (LionsLane/lionslane PR #17) | Waiting for merge and the Cloudflare worker deploy |
-| Lions Lane website | EMMA tab, menu item, footer link and /emma page (LionsLane/lionslane PR #17) | Waiting for merge and deploy |
-| AI | Claude Console key `EMMA production` (promotional credit USD 99.72 until 18 Mar 2027) | Waiting for the key in `.env.local` |
-| Cards | Stripe account **EMMA** `acct_1UYoy0Dt4BY5EyCm` (United States, test mode). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Waiting for the secret key and webhook signing secret; live payments need Stripe business verification |
-| M-Pesa | Safaricom Daraja | Waiting for the app keys |
-| Live test | `node scripts/e2e.mjs` (27 checks) and `node scripts/e2e.mjs --ai` | 27 of 27 passed on 6 Nov 2026 |
+| Database and sign-in | Supabase project **EMMA**, ref `vxxybllgluasxtohnntu`, Frankfurt; migrations applied (incl. `paystack_payments`) | Live |
+| Sign-in | Email code, email link (`/auth/confirm`), passkeys, Google (own GSI button, pop-up, redirect fallback; Google Cloud project EMMA, client "EMMA web"), two-step (authenticator, passkey) | Live; Google tested in Chrome with two accounts |
+| Account screens | Initials button (top right): Your profile, Business profile, Sign-in security, Plan & billing, Log out; Log out on the setup screen | Live |
+| Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke> | Live |
+| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ in `infra/mailrouter/worker.js` (LionsLane/lionslane) | Waiting for the owner to paste the Worker code in Cloudflare and Deploy |
+| Lions Lane website | EMMA tab, menu item, footer link and /emma page | Live |
+| AI | Claude Console key `EMMA production` | Live |
+| Cards | Stripe account **EMMA** (test mode, staff only). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Live for staff tests; customers need Stripe verification |
+| Paystack | Code live (init, verify, signed webhook); account created in test mode | Waiting for `PAYSTACK_SECRET_KEY` (Desktop button 9), webhook URL in the dashboard, then compliance to go live |
+| M-Pesa | Daraja sandbox app "EMMA" (174379), staff only | Sandbox tested; go-live waits for a Till or PayBill |
+| Search | Search Console URL-prefix property verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Bing Webmaster import waits for the owner's sign-in |
+| Analytics | Vercel Web Analytics (cookieless); GA4 property EMMA `G-E9PQVEK9RS`, loaded only after consent (`src/components/Consent.tsx`) | Live |
+| Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
+
+Still open: Kopo Kopo, Daraja go-live, EMMA on the Lions Lane Google Business Profile, Ahrefs, Google brand verification (shows "EMMA" on Google's screen).
 
 ### 3. Phase 7: Deploy (owner-supplied items first)
 
