@@ -150,12 +150,12 @@ export const DOCS: Record<string, LegalDoc> = {
         <table className="legal-table">
           <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Lasts</th></tr></thead>
           <tbody>
-            <tr><td><code>emma_ga</code></td><td>Cookie</td><td>Google Analytics: tells visits apart, without your name or email</td><td>2 years</td></tr>
-            <tr><td><code>emma_ga_E9PQVEK9RS</code></td><td>Cookie</td><td>Google Analytics: keeps the state of a visit</td><td>2 years</td></tr>
+            <tr><td><code>_ga</code></td><td>Cookie</td><td>Google Analytics: tells visits apart, without your name or email. Shared with the Lions Lane website (lionslane.co.ke), which has its own cookie choice</td><td>2 years</td></tr>
+            <tr><td><code>_ga_E9PQVEK9RS</code></td><td>Cookie</td><td>Google Analytics: keeps the state of a visit</td><td>2 years</td></tr>
             <tr><td><code>emma-consent</code></td><td>Local storage</td><td>Remembers your cookie choice</td><td>Until you clear it</td></tr>
           </tbody>
         </table>
-        <p>You can change your mind at any time with <b>Cookie settings</b> at the bottom of our pages. Choosing No thanks removes EMMA&apos;s Google Analytics cookies. They are set on emma.lionslane.co.ke only. You may also see <code>_ga</code> cookies from the Lions Lane website (lionslane.co.ke), which has its own cookie choice. We also use Vercel Web Analytics, which is anonymous and uses no cookies.</p>
+        <p>You can change your mind at any time with <b>Cookie settings</b> at the bottom of our pages. Choosing No thanks stops EMMA&apos;s analytics and removes EMMA&apos;s own cookie (<code>_ga_E9PQVEK9RS</code>). The shared <code>_ga</code> cookie stays only if you allowed analytics on lionslane.co.ke; change that on the Lions Lane website. We also use Vercel Web Analytics, which is anonymous and uses no cookies.</p>
 
         <h2>No advertising cookies</h2>
         <p>We don&apos;t use advertising or social media cookies.</p>
