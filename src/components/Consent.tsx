@@ -33,21 +33,26 @@ function loadAnalytics() {
   };
   w.gtag("consent", "default", { analytics_storage: "granted", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
   w.gtag("js", new Date());
-  w.gtag("config", GA_ID, { allow_google_signals: false, allow_ad_personalization_signals: false });
+  // EMMA's own cookies (emma_ga…) on this host only, so they never mix with the
+  // Lions Lane website's _ga cookies on .lionslane.co.ke.
+  w.gtag("config", GA_ID, {
+    allow_google_signals: false, allow_ad_personalization_signals: false,
+    cookie_prefix: "emma", cookie_domain: window.location.hostname,
+  });
   const s = document.createElement("script");
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`;
   document.head.appendChild(s);
 }
 
-// Removes Google Analytics cookies when someone withdraws consent.
+// Removes EMMA's Google Analytics cookies when someone withdraws consent. Only ours
+// (emma_ga…): cookies another site set on the parent domain aren't ours to delete.
 function clearAnalyticsCookies() {
   const host = window.location.hostname;
-  const parent = host.split(".").slice(-3).join(".");
   for (const c of document.cookie.split(";")) {
     const name = c.split("=")[0].trim();
-    if (name === "_ga" || name.startsWith("_ga_")) {
-      for (const d of ["", host, `.${host}`, `.${parent}`]) document.cookie = `${name}=; Max-Age=0; path=/${d ? `; domain=${d}` : ""}`;
+    if (name === "emma_ga" || name.startsWith("emma_ga_")) {
+      for (const d of ["", host]) document.cookie = `${name}=; Max-Age=0; path=/${d ? `; domain=${d}` : ""}`;
     }
   }
 }
