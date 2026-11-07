@@ -44,7 +44,7 @@ export const DOCS: Record<string, LegalDoc> = {
           <li>To provide EMMA under our contract with you: running your workspace, generating your plans, billing.</li>
           <li>Our legitimate interests: keeping the service secure, preventing abuse, and improving the product from aggregated usage.</li>
           <li>Legal obligations: keeping financial records.</li>
-          <li>Your consent, where we ask for it (for example product news by email). You can withdraw it at any time.</li>
+          <li>Your consent, where we ask for it (for example product news by email, or Google Analytics cookies). You can withdraw it at any time.</li>
         </ul>
         <p>We do not sell personal data and we do not use your workspace to train AI models.</p>
 
@@ -56,9 +56,10 @@ export const DOCS: Record<string, LegalDoc> = {
             <tr><td>Vercel</td><td>Hosting the website and API, and anonymous page statistics</td><td>Global</td></tr>
             <tr><td>Brevo</td><td>Sending sign-in codes and account emails</td><td>European Union</td></tr>
             <tr><td>Cloudflare</td><td>Our domain name and forwarding of our support email addresses</td><td>Global</td></tr>
-            <tr><td>Google</td><td>Google sign-in, only if you choose it</td><td>Global</td></tr>
+            <tr><td>Google</td><td>Google sign-in, only if you choose it; Google Analytics page statistics, only if you allow analytics cookies</td><td>Global</td></tr>
             <tr><td>Anthropic</td><td>Generating EMMA&apos;s responses (Claude)</td><td>United States</td></tr>
             <tr><td>Stripe</td><td>Card payments</td><td>Global</td></tr>
+            <tr><td>Paystack</td><td>M-Pesa and card payments through Paystack&apos;s checkout</td><td>Global</td></tr>
             <tr><td>Safaricom</td><td>M-Pesa payments</td><td>Kenya</td></tr>
           </tbody>
         </table>
@@ -144,11 +145,23 @@ export const DOCS: Record<string, LegalDoc> = {
         </table>
         <p>These are needed for the service to work, so they don&apos;t require consent.</p>
 
-        <h2>No tracking cookies</h2>
-        <p>We don&apos;t use advertising or social media cookies. Our page statistics (Vercel Web Analytics) are anonymous and don&apos;t use cookies.</p>
+        <h2>Analytics cookies, only if you allow them</h2>
+        <p>We ask before setting any analytics cookie. If you tap <b>Allow</b>, Google Analytics sets the cookies below so we can see which pages help people. If you tap <b>No thanks</b>, or don&apos;t choose, Google&apos;s analytics script never loads. Advertising features, Google signals and ad personalisation are switched off.</p>
+        <table className="legal-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Lasts</th></tr></thead>
+          <tbody>
+            <tr><td><code>_ga</code></td><td>Cookie</td><td>Google Analytics: tells visits apart, without your name or email</td><td>2 years</td></tr>
+            <tr><td><code>_ga_E9PQVEK9RS</code></td><td>Cookie</td><td>Google Analytics: keeps the state of a visit</td><td>2 years</td></tr>
+            <tr><td><code>emma-consent</code></td><td>Local storage</td><td>Remembers your cookie choice</td><td>Until you clear it</td></tr>
+          </tbody>
+        </table>
+        <p>You can change your mind at any time with <b>Cookie settings</b> at the bottom of our pages. Choosing No thanks removes the Google Analytics cookies. We also use Vercel Web Analytics, which is anonymous and uses no cookies.</p>
 
-        <h2>Card checkout</h2>
-        <p>If you pay by card, Stripe&apos;s checkout page sets its own cookies for fraud prevention, under Stripe&apos;s privacy policy.</p>
+        <h2>No advertising cookies</h2>
+        <p>We don&apos;t use advertising or social media cookies.</p>
+
+        <h2>Payment pages</h2>
+        <p>If you pay by card through Stripe, or by M-Pesa or card through Paystack, their checkout pages set their own cookies for security and fraud prevention, under their own privacy policies.</p>
       </>
     ),
   },

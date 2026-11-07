@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "@/components/Consent";
 import { Orb } from "@/components/Orb";
 import { COMPANY } from "@/lib/company";
 
@@ -39,6 +40,7 @@ export function SiteFooter() {
         <Link href="/legal/security">Security</Link>
         <Link href="/legal/dpa">Data processing</Link>
         <a href="https://lionslane.co.ke/emma">About EMMA at Lions Lane</a>
+        <CookieSettingsButton />
       </nav>
       <p className="small faint" style={{ margin: 0 }}>© {new Date().getFullYear()} {COMPANY.legalName}</p>
     </footer>

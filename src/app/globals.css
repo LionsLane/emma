@@ -617,3 +617,9 @@ table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
 @media (pointer: coarse) { .btn, .tabs button, .select, .input { min-height: 44px; } .btn.sm { min-height: 40px; } }
 
 .gsi-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+/* Cookie choice (Google Analytics only with consent) */
+.consent { position: fixed; z-index: 80; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); margin: 0 auto; max-width: 520px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-solid); box-shadow: 0 20px 50px -20px rgba(0,0,0,0.85); }
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.linklike:hover { text-decoration: underline; }
+.linklike:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

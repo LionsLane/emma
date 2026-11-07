@@ -9,14 +9,17 @@ const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 // frame tricking someone into pressing "Approve"). Google's sign-in button
 // (accounts.google.com/gsi) loads a script, a style sheet and a frame.
 const gsi = "https://accounts.google.com/gsi/";
+// Google Analytics (only after consent, see src/components/Consent.tsx).
+const ga = "https://www.googletagmanager.com";
+const gaConnect = "https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${gsi}client${dev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${gsi}client ${ga}${dev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
   `style-src 'self' 'unsafe-inline' ${gsi}style`,
   `frame-src ${gsi}`,
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${gsi}${supabase ? ` ${supabase} ${supabase.replace(/^https/, "wss")}` : ""}${dev ? " ws: http://localhost:*" : ""}`,
+  `connect-src 'self' ${gsi} ${gaConnect}${supabase ? ` ${supabase} ${supabase.replace(/^https/, "wss")}` : ""}${dev ? " ws: http://localhost:*" : ""}`,
   "frame-ancestors 'none'",
   "form-action 'self' https://checkout.stripe.com",
   "base-uri 'self'",
