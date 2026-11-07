@@ -2208,17 +2208,17 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Sign-in | Email code, email link (`/auth/confirm`), passkeys, Google (own GSI button, pop-up, redirect fallback; Google Cloud project EMMA, client "EMMA web"), two-step (authenticator, passkey) | Live; Google tested in Chrome with two accounts |
 | Account screens | Initials button (top right): Your profile, Business profile, Sign-in security, Plan & billing, Log out; Log out on the setup screen | Live |
 | Sign-in email | Brevo SMTP as EMMA <emma@lionslane.co.ke> | Live |
-| EMMA's addresses | emma@, emmasupport@, emmabilling@, emmaprivacy@, emmasecurity@ in `infra/mailrouter/worker.js` (LionsLane/lionslane) | Waiting for the owner to paste the Worker code in Cloudflare and Deploy |
+| EMMA's addresses | emma@ (sign-in sender), emmasupport@ (footer, terms), emmabilling@ (refunds, billing screen), emmaprivacy@ (privacy, DPA), emmasecurity@ (security policy, `/.well-known/security.txt`); Worker `lionslane-mailrouter` version 349e0075 | Live; Eve's copies start once she verifies her Cloudflare destination |
 | Lions Lane website | EMMA tab, menu item, footer link and /emma page | Live |
 | AI | Claude Console key `EMMA production` | Live |
 | Cards | Stripe account **EMMA** (test mode, staff only). Prices: Pro `price_1UYp5dDt4BY5EyCmwe28lN5B`, Max `price_1UYp8oDt4BY5EyCmpKUwB72w`. Webhook "EMMA billing" `we_1UYpHfDt4BY5EyCmUBf4JlCq` | Live for staff tests; customers need Stripe verification |
-| Paystack | Code live (init, verify, signed webhook); account created in test mode | Waiting for `PAYSTACK_SECRET_KEY` (Desktop button 9), webhook URL in the dashboard, then compliance to go live |
+| Paystack | Test key in Vercel; Test Callback `…/app/billing?paystack=1` and Test Webhook `…/api/billing/paystack/webhook` saved in the dashboard; `paystacktest.mjs` 9/9 | Live for staff tests; customers need compliance (5 sections) and live keys |
 | M-Pesa | Daraja sandbox app "EMMA" (174379), staff only | Sandbox tested; go-live waits for a Till or PayBill |
-| Search | Search Console URL-prefix property verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Bing Webmaster import waits for the owner's sign-in |
+| Search | Search Console verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; Bing Webmaster verified (meta `msvalidate.01`), sitemap submitted; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Ahrefs Webmaster Tools waits for the owner's sign-in (API plan too small) |
 | Analytics | Vercel Web Analytics (cookieless); GA4 property EMMA `G-E9PQVEK9RS`, loaded only after consent (`src/components/Consent.tsx`) | Live |
-| Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
+| Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
 
-Still open: Kopo Kopo, Daraja go-live, EMMA on the Lions Lane Google Business Profile, Ahrefs, Google brand verification (shows "EMMA" on Google's screen).
+Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.
 
 ### 3. Phase 7: Deploy (owner-supplied items first)
 
