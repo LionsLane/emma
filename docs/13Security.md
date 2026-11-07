@@ -35,7 +35,8 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 ## 3. Controls by layer
 
 ### Identity and sessions
-- Supabase Auth: email OTP (6 digits) and Google on web. `getClaims()` verifies the JWT signature on every API call.
+- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. `getClaims()` verifies the JWT signature on every API call.
+- Two-step: a user whose session is `aal1` is refused by every API (`401 {mfa:true}`) when Supabase's admin API lists a verified factor for them. The factor list never comes from the session cookie, which the browser can edit; `src/proxy.ts` uses the cookie only to steer screens.
 - HttpOnly cookies refreshed by `src/proxy.ts`; mobile stores the session in expo-sqlite-backed localStorage and sends a Bearer token.
 - `user_metadata` is never used for authorisation; staff is `profiles.is_staff`, server-only.
 - OAuth callback accepts only same-site `next` paths (no open redirects).

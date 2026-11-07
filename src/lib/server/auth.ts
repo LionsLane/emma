@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CLOUD } from "@/lib/supabase/env";
-import { supabaseFromCookies, supabaseFromToken } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseFromCookies, supabaseFromToken } from "@/lib/supabase/server";
 import { fail, sameOrigin } from "./http";
 
 export interface AuthedUser {
@@ -26,9 +26,12 @@ export async function requireUser(req: Request): Promise<AuthedUser | Response> 
   const sub = data?.claims?.sub;
   if (error || !sub) return fail(401, "Please sign in again.");
   // Two-step verification: a user with a verified second factor must have used it (aal2).
+  // The factor list comes from Supabase's admin API, not the session cookie, which the
+  // browser can edit.
   if (data.claims.aal !== "aal2") {
-    const { data: aal } = await db.auth.mfa.getAuthenticatorAssuranceLevel(token ?? undefined);
-    if (aal?.nextLevel === "aal2") return fail(401, "Finish two-step verification to continue.", { mfa: true });
+    const { data: f, error: fErr } = await supabaseAdmin().auth.admin.mfa.listFactors({ userId: sub });
+    if (fErr) return fail(503, "Couldn't check your sign-in security. Try again.");
+    if ((f?.factors ?? []).some((x) => x.status === "verified")) return fail(401, "Finish two-step verification to continue.", { mfa: true });
   }
   return { id: sub, email: (data.claims.email as string | undefined) ?? null, db, token };
 }

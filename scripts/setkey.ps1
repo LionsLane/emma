@@ -11,6 +11,7 @@ $allowed = @{
   'MPESA_CONSUMER_SECRET' = ''
   'MPESA_SHORTCODE'       = ''
   'MPESA_PASSKEY'         = ''
+  'PAYSTACK_SECRET_KEY'   = 'sk_'
 }
 if (-not $allowed.ContainsKey($Name)) { Write-Host "Unknown name '$Name'. Use one of: $($allowed.Keys -join ', ')" -ForegroundColor Red; exit 1 }
 

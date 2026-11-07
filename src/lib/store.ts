@@ -21,6 +21,7 @@ export interface JuryDraft { title: string; kind: string; context: string; pitch
 export interface Account {
   user: { id: string; email: string | null; name: string; onboarded: boolean; staff: boolean };
   plan: { id: "free" | "pro" | "max" | "demo"; name: string; priceKES: number; model: string; periodEnd: string | null; provider: string };
+  payments?: { mpesa: boolean; paystack: boolean; card: boolean };
   limits: { briefs: number; searches: number; jury: number; workspaces: number; seats: number; leads: string };
   usage: { briefs: number; searches: number; jury: number; costUSD: number };
   workspaces: { id: string; name: string; owner_id: string; updated_at: string }[];

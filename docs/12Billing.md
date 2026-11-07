@@ -42,10 +42,13 @@ Most users won't reach the cap; average margin will be higher. Free users cost �
 | Method | Model | Renewal | Plan active when |
 |---|---|---|---|
 | **M-Pesa** (Daraja STK push) | Prepaid 30 days | Manual: pay again (reminder 3 days before, v1.1) | STK query confirms payment and amount |
+| **Paystack** (hosted checkout: M-Pesa or card, KES) | Prepaid 30 days | Manual: pay again | Paystack verify API confirms success, KES and amount |
 | **Card** (Stripe Checkout, KES prices) | Subscription | Automatic monthly | Signed webhook lands |
 | Manual (LionsLane grants) | SQL by staff | — | Immediately |
 
-**Stripe and Kenya:** Stripe doesn't onboard Kenya-registered businesses directly. Options: a supported entity, or swap the card processor for **Paystack** or **Flutterwave** (both support KES cards and M-Pesa). The card flow is one module (`billing.ts`), so the swap touches checkout, portal and webhook only. Decision owner: LionsLane.
+**Stripe and Kenya:** Stripe doesn't onboard Kenya-registered businesses directly, so Stripe runs on a test account and **Paystack** (chosen 7 Nov 2026: free to open, KES, M-Pesa and cards) is the live route while Daraja waits for a Till or PayBill.
+
+**Which methods a customer sees:** `GET /api/account` returns `payments: { mpesa, paystack, card }`. A method shows only when its keys are set, and test keys (Stripe `sk_test_`, Daraja sandbox, Paystack `sk_test_`) count only for staff in production. With none open, checkout says payments open once the accounts are verified.
 
 ## 3. M-Pesa flow
 ```
@@ -63,6 +66,12 @@ Browser: polls GET /status every 4 s × 30 ─▶ paid → "You're on Pro until 
 - Paying while still active extends from the current end date (no lost days).
 - Upgrading Pro → Max via M-Pesa: the new 30 days are Max; remaining Pro days aren't refunded in v1 (stated on the checkout sheet).
 - Sandbox: Daraja test credentials and the sandbox phone. Production needs Lipa na M-Pesa Online on a PayBill or Till (`MPESA_TRANSACTION_TYPE=CustomerBuyGoodsOnline`, `MPESA_PARTYB=<till>` for a Till).
+
+## 3a. Paystack flow
+1. `POST /api/billing/paystack/init { plan }`: our row first (`paystack_payments`, reference `emma-<uuid>`, amount from `PLANS`), then Paystack `transaction/initialize` (amount × 100, `KES`, channels `mobile_money` and `card`, callback `/app/billing?paystack=1`). Max 5 checkouts per user per 10 minutes.
+2. The customer pays on `checkout.paystack.com`; Paystack sends them back with `?reference=`.
+3. `GET /api/billing/paystack/verify?reference=` (owner only) and the signed webhook `POST /api/billing/paystack/webhook` (`charge.success`, HMAC SHA512 of the raw body with the secret key) both call `settlePaystack`, which asks Paystack's verify API, requires `success`, `KES` and the exact amount, claims the row once (`pending → paid`), then `extendPlan` adds 30 days.
+4. Paystack dashboard setting: webhook URL `https://emma.lionslane.co.ke/api/billing/paystack/webhook`. Key: `PAYSTACK_SECRET_KEY` (Desktop button 9, then Vercel env).
 
 ## 4. Card flow (Stripe)
 ```

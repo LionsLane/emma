@@ -18,6 +18,15 @@ async function setPlan(admin: SupabaseClient, userId: string, row: Record<string
   if (error) throw new Error(`subscription upsert failed: ${error.message}`);
 }
 
+// One paid month (M-Pesa or Paystack): 30 days, added on top of time left on the same plan.
+export async function extendPlan(admin: SupabaseClient, userId: string, plan: PlanId, provider: "mpesa" | "paystack") {
+  const { data: sub } = await admin.from("subscriptions").select("plan,current_period_end").eq("user_id", userId).maybeSingle();
+  const now = Date.now();
+  const end = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : 0;
+  const base = sub?.plan === plan && end > now ? end : now;
+  await setPlan(admin, userId, { plan, status: "active", provider, current_period_end: new Date(base + 30 * DAY).toISOString() });
+}
+
 // ---------------------------------------------------------------- Stripe (cards)
 
 let stripeClient: Stripe | null = null;
@@ -159,10 +168,6 @@ export async function settleMpesa(admin: SupabaseClient, checkoutRequestId: stri
     .select("checkout_request_id").maybeSingle();
   if (!claimed) return "paid";
 
-  const { data: sub } = await admin.from("subscriptions").select("plan,current_period_end").eq("user_id", pay.user_id).maybeSingle();
-  const now = Date.now();
-  const end = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : 0;
-  const base = sub?.plan === pay.plan && end > now ? end : now;
-  await setPlan(admin, pay.user_id, { plan: pay.plan, status: "active", provider: "mpesa", current_period_end: new Date(base + 30 * DAY).toISOString() });
+  await extendPlan(admin, pay.user_id, pay.plan, "mpesa");
   return "paid";
 }

@@ -56,7 +56,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Two-step verification: someone with a verified second factor who has only done step one
-  // goes to /signin/verify before any app page. The session cookie already lists the factors.
+  // goes to /signin/verify before any app page. This reads the factor list from the session
+  // cookie, so it only steers the screens; requireUser (src/lib/server/auth.ts) enforces it
+  // for every API call with the factor list from Supabase's admin API.
   let needsSecondStep = false;
   if (signedIn && data?.claims?.aal !== "aal2" && (path.startsWith("/app") || path.startsWith("/signin"))) {
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();

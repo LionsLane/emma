@@ -104,6 +104,15 @@ Called by Safaricom. Always answers `{ ResultCode: 0, ResultDesc: "Accepted" }`.
 ### `POST /api/billing/stripe/portal`
 → `{ url }` for the customer portal. 404 if no card subscription.
 
+### `POST /api/billing/paystack/init`
+Auth. `{ plan: "pro" | "max" }` → `{ url }` (checkout.paystack.com). 503 when Paystack isn't set up, or test keys for a non-staff user in production. 429 after 5 checkouts in 10 minutes.
+
+### `GET /api/billing/paystack/verify?reference=emma-<uuid>`
+Auth, owner of the payment only. → `{ status: "pending" | "paid" | "failed" }`, settling through Paystack's verify API.
+
+### `POST /api/billing/paystack/webhook`
+Paystack only. Raw body ≤ 200 KB, `x-paystack-signature` = HMAC SHA512 with `PAYSTACK_SECRET_KEY`. `charge.success` → `settlePaystack` (re-verifies with Paystack). Returns 500 on settle failure so Paystack retries.
+
 ### `POST /api/billing/stripe/webhook`
 Stripe only. Raw body ≤ 512 KB, signature verified with `STRIPE_WEBHOOK_SECRET`. Handles `checkout.session.completed`, `customer.subscription.created|updated|deleted` → `syncStripeSubscription` (period end read from the subscription item). Returns 500 on handler failure so Stripe retries.
 

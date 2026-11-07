@@ -6,6 +6,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { isResponse, requireUser } from "@/lib/server/auth";
 import { fail, json } from "@/lib/server/http";
 import { resolvePlan, usageThisMonth } from "@/lib/server/quota";
+import { mpesaConfigured, mpesaSandbox, practicePaymentsBlocked, stripe, stripePrice, stripeTestMode } from "@/lib/server/billing";
+import { paystackConfigured, paystackTestMode } from "@/lib/server/paystack";
 
 export const runtime = "nodejs";
 
@@ -20,7 +22,15 @@ export async function GET(req: Request) {
     user.db.from("profiles").select("full_name,onboarded,is_staff").eq("id", user.id).maybeSingle(),
   ]);
   const p = state.plan;
+  // Which ways to pay are open to this person (test keys: staff only).
+  const blocked = practicePaymentsBlocked(state.staff);
+  const payments = {
+    mpesa: mpesaConfigured() && !(mpesaSandbox() && blocked),
+    paystack: paystackConfigured() && !(paystackTestMode() && blocked),
+    card: Boolean(stripe() && stripePrice("pro") && stripePrice("max")) && !(stripeTestMode() && blocked),
+  };
   return json(200, {
+    payments,
     user: { id: user.id, email: user.email, name: profile?.full_name ?? "", onboarded: Boolean(profile?.onboarded), staff: state.staff },
     plan: { id: p.id, name: p.name, priceKES: p.priceKES, model: p.modelLabel, periodEnd: state.periodEnd, provider: state.provider },
     limits: { briefs: p.briefsPerMonth, searches: p.searchesPerMonth, jury: p.juryPerMonth, workspaces: p.workspaces, seats: p.seats, leads: limitLabel(p.leads) },

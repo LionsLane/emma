@@ -28,6 +28,27 @@ function Billing() {
     if (p === "pro" || p === "max") setCheckout(p);
   }, [params]);
 
+  // Back from Paystack (?paystack=1&reference=…): confirm with our server, which asks Paystack.
+  const psRef = params.get("paystack") ? params.get("reference") ?? params.get("trxref") : null;
+  useEffect(() => {
+    if (!psRef) return;
+    let tries = 0;
+    let done = false;
+    const run = async () => {
+      tries += 1;
+      const res = await fetch(`/api/billing/paystack/verify?reference=${encodeURIComponent(psRef)}`, { cache: "no-store" });
+      const body = (await res.json().catch(() => ({}))) as { status?: string; error?: string };
+      if (body.status === "paid") { done = true; await refreshAccount(); toast(`Payment received. You're on ${useEmma.getState().account?.plan.name ?? "your new plan"}.`, "ok"); }
+      else if (body.status === "failed") { done = true; toast("The payment didn't go through. Nothing was charged.", "risk"); }
+      else if (!res.ok) { done = true; toast(body.error ?? "Couldn't confirm the payment. Contact support if you were charged.", "risk"); }
+      else if (tries >= 10) { done = true; toast("Paystack is still processing. Your plan updates as soon as it confirms.", "info"); }
+      if (done) { clearInterval(t); router.replace("/app/billing"); }
+    };
+    const t = setInterval(() => { if (!done) void run(); }, 3000);
+    void run();
+    return () => clearInterval(t);
+  }, [psRef, refreshAccount, router, toast]);
+
   // Back from Stripe: the webhook may land a moment after the redirect.
   useEffect(() => {
     if (status !== "success") { if (status === "cancelled") toast("Checkout cancelled. Nothing was charged.", "info"); return; }
@@ -69,7 +90,7 @@ function Billing() {
         <Stat label="Plan" value={p.name} foot={p.priceKES ? `${formatKES(p.priceKES)} / month` : "Free forever"} />
         <Stat label="Briefs this month" value={`${account.usage.briefs} / ${account.limits.briefs}`} />
         <Stat label="Web searches" value={account.limits.searches ? `${account.usage.searches} / ${account.limits.searches}` : "Pro and Max"} />
-        <Stat label={p.provider === "mpesa" ? "Paid until" : "Renews"} value={end ?? "—"} foot={p.provider === "mpesa" ? "M-Pesa, 30 days per payment" : p.provider === "stripe" ? "Card" : undefined} />
+        <Stat label={p.provider === "mpesa" || p.provider === "paystack" ? "Paid until" : "Renews"} value={end ?? "—"} foot={p.provider === "mpesa" ? "M-Pesa, 30 days per payment" : p.provider === "paystack" ? "Paystack, 30 days per payment" : p.provider === "stripe" ? "Card" : undefined} />
       </div>
       {p.provider === "stripe" && <div className="row"><button className="btn sm" onClick={manageCard}>Manage card subscription</button></div>}
       <PlanCards current={p.id} onPick={setCheckout} />
@@ -79,10 +100,16 @@ function Billing() {
   );
 }
 
+type Method = "mpesa" | "paystack" | "card";
+const METHOD_LABEL: Record<Method, string> = { mpesa: "M-Pesa", paystack: "Paystack", card: "Card" };
+
 function Checkout({ plan, onClose }: { plan: "pro" | "max" | null; onClose: () => void }) {
   const refreshAccount = useEmma((s) => s.refreshAccount);
   const toast = useEmma((s) => s.toast);
-  const [method, setMethod] = useState<"mpesa" | "card">("mpesa");
+  const open = useEmma((s) => s.account?.payments) ?? { mpesa: true, paystack: false, card: true };
+  const methods = (["mpesa", "paystack", "card"] as const).filter((m) => open[m]);
+  const [picked, setMethod] = useState<Method | null>(null);
+  const method: Method | null = picked && methods.includes(picked) ? picked : methods[0] ?? null;
   const [phone, setPhone] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "waiting" | "paid" | "failed">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -122,6 +149,17 @@ function Checkout({ plan, onClose }: { plan: "pro" | "max" | null; onClose: () =
     timer.current = setInterval(() => { n += 1; if (n > 30) { if (timer.current) clearInterval(timer.current); return; } void check(body.checkoutRequestId!); }, 4000);
   };
 
+  const payPaystack = async () => {
+    if (!plan) return;
+    setState("sending");
+    setMessage(null);
+    const res = await fetch("/api/billing/paystack/init", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan }) });
+    const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+    if (body.url && body.url.startsWith("https://checkout.paystack.com/")) { window.location.href = body.url; return; }
+    setState("failed");
+    setMessage(body.error ?? "Couldn't open Paystack checkout.");
+  };
+
   const payCard = async () => {
     if (!plan) return;
     setState("sending");
@@ -153,27 +191,43 @@ function Checkout({ plan, onClose }: { plan: "pro" | "max" | null; onClose: () =
           </div>
         ) : (
           <>
-            <div className="tabs" role="tablist" aria-label="Payment method">
-              <button role="tab" aria-selected={method === "mpesa"} className={method === "mpesa" ? "on" : ""} onClick={() => setMethod("mpesa")}>M-Pesa</button>
-              <button role="tab" aria-selected={method === "card"} className={method === "card" ? "on" : ""} onClick={() => setMethod("card")}>Card</button>
-            </div>
-            {method === "mpesa" ? (
-              <form onSubmit={payMpesa} className="stack" style={{ gap: 12 }}>
-                <div className="field">
-                  <label htmlFor="mp">M-Pesa number</label>
-                  <input id="mp" className="input" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0712 345 678" data-autofocus disabled={state === "waiting"} />
-                </div>
-                <button className="btn ai" type="submit" disabled={state === "sending" || state === "waiting" || phone.replace(/\D/g, "").length < 9}>
-                  {state === "sending" ? "Sending prompt…" : state === "waiting" ? "Waiting for your PIN…" : `Pay ${formatKES(p.priceKES)}`}
-                </button>
-                {state === "waiting" && requestId && <button type="button" className="btn ghost sm" onClick={() => void check(requestId)}>I&apos;ve paid. Check now</button>}
-                <p className="small faint" style={{ margin: 0 }}>Each payment gives you 30 days. We&apos;ll remind you before it ends.</p>
-              </form>
+            {methods.length === 0 ? (
+              <div className="banner" role="status">Payments open as soon as our payment accounts are verified. Your Free plan keeps working in the meantime.</div>
             ) : (
-              <div className="stack" style={{ gap: 12 }}>
-                <p className="small muted" style={{ margin: 0 }}>Pay by Visa or Mastercard through Stripe. Renews monthly; cancel any time.</p>
-                <button className="btn primary" onClick={payCard} disabled={state === "sending"}>{state === "sending" ? "Opening checkout…" : "Continue to secure checkout"}</button>
-              </div>
+              <>
+                {methods.length > 1 && (
+                  <div className="tabs" role="tablist" aria-label="Payment method">
+                    {methods.map((m) => (
+                      <button key={m} role="tab" aria-selected={method === m} className={method === m ? "on" : ""} onClick={() => setMethod(m)}>{METHOD_LABEL[m]}</button>
+                    ))}
+                  </div>
+                )}
+                {method === "mpesa" && (
+                  <form onSubmit={payMpesa} className="stack" style={{ gap: 12 }}>
+                    <div className="field">
+                      <label htmlFor="mp">M-Pesa number</label>
+                      <input id="mp" className="input" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0712 345 678" data-autofocus disabled={state === "waiting"} />
+                    </div>
+                    <button className="btn ai" type="submit" disabled={state === "sending" || state === "waiting" || phone.replace(/\D/g, "").length < 9}>
+                      {state === "sending" ? "Sending prompt…" : state === "waiting" ? "Waiting for your PIN…" : `Pay ${formatKES(p.priceKES)}`}
+                    </button>
+                    {state === "waiting" && requestId && <button type="button" className="btn ghost sm" onClick={() => void check(requestId)}>I&apos;ve paid. Check now</button>}
+                    <p className="small faint" style={{ margin: 0 }}>Each payment gives you 30 days. We&apos;ll remind you before it ends.</p>
+                  </form>
+                )}
+                {method === "paystack" && (
+                  <div className="stack" style={{ gap: 12 }}>
+                    <p className="small muted" style={{ margin: 0 }}>Pay with M-Pesa or a Visa or Mastercard card on Paystack&apos;s secure page. Each payment gives you 30 days.</p>
+                    <button className="btn ai" onClick={payPaystack} disabled={state === "sending"}>{state === "sending" ? "Opening Paystack…" : `Pay ${formatKES(p.priceKES)} with Paystack`}</button>
+                  </div>
+                )}
+                {method === "card" && (
+                  <div className="stack" style={{ gap: 12 }}>
+                    <p className="small muted" style={{ margin: 0 }}>Pay by Visa or Mastercard through Stripe. Renews monthly; cancel any time.</p>
+                    <button className="btn primary" onClick={payCard} disabled={state === "sending"}>{state === "sending" ? "Opening checkout…" : "Continue to secure checkout"}</button>
+                  </div>
+                )}
+              </>
             )}
             {message && <div className={state === "failed" ? "err" : "banner"} role={state === "failed" ? "alert" : "status"}>{message}</div>}
           </>
