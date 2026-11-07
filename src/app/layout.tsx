@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", title: "EMMA by Lions Lane", description: "The AI marketing assistant for small businesses in Kenya. Free to start." },
   robots: { index: true, follow: true },
+  // Bing Webmaster Tools ownership (Google is verified by public/googlecb964cb588b1659e.html).
+  verification: { other: { "msvalidate.01": "32D54F12B725577B81A8E1DB62547DE7" } },
 };
 
 export const viewport: Viewport = { themeColor: "#050914", width: "device-width", initialScale: 1 };
