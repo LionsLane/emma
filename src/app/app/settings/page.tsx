@@ -206,9 +206,11 @@ function AccountPanel() {
   const [methods, setMethods] = useState<string[]>([]);
   useEffect(() => {
     void supabaseBrowser()?.auth.getUser().then(({ data }) => {
-      const ids = data.user?.identities?.map((i) => i.provider) ?? [];
-      setMethods([...new Set(ids)]);
-    });
+      const u = data.user;
+      const fromMeta = Array.isArray(u?.app_metadata?.providers) ? (u.app_metadata.providers as string[]) : [];
+      const ids = [...fromMeta, ...(u?.identities?.map((i) => i.provider) ?? []), ...(u?.app_metadata?.provider ? [String(u.app_metadata.provider)] : [])];
+      setMethods(ids.length ? [...new Set(ids)] : ["email"]);
+    }).catch(() => setMethods(["email"]));
   }, []);
   if (!account) return null;
   const value = name ?? account.user.name;

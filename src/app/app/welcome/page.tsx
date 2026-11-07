@@ -22,6 +22,7 @@ export default function Welcome() {
   const bootstrap = useEmma((s) => s.bootstrap);
   const send = useEmma((s) => s.send);
   const toast = useEmma((s) => s.toast);
+  const signOut = useEmma((s) => s.signOut);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [what, setWhat] = useState("");
@@ -80,6 +81,7 @@ export default function Welcome() {
             <div className="small muted">Step {step + 1} of 3</div>
             <div className="dots" aria-hidden="true" style={{ marginTop: 6 }}>{[0, 1, 2].map((i) => <i key={i} className={i <= step ? "ng" : ""} />)}</div>
           </div>
+          {mode === "cloud" && <button className="btn ghost sm" onClick={() => void signOut()} disabled={busy}>Log out</button>}
         </div>
 
         {step === 0 && (

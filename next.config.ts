@@ -6,14 +6,17 @@ const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 // Content Security Policy. Inline scripts/styles are allowed because Next's
 // hydration and React style props need them; everything else is locked to our
 // own origin and Supabase. frame-ancestors 'none' stops clickjacking (a hidden
-// frame tricking someone into pressing "Approve").
+// frame tricking someone into pressing "Approve"). Google's sign-in button
+// (accounts.google.com/gsi) loads a script, a style sheet and a frame.
+const gsi = "https://accounts.google.com/gsi/";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline' ${gsi}client${dev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
+  `style-src 'self' 'unsafe-inline' ${gsi}style`,
+  `frame-src ${gsi}`,
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self'${supabase ? ` ${supabase} ${supabase.replace(/^https/, "wss")}` : ""}${dev ? " ws: http://localhost:*" : ""}`,
+  `connect-src 'self' ${gsi}${supabase ? ` ${supabase} ${supabase.replace(/^https/, "wss")}` : ""}${dev ? " ws: http://localhost:*" : ""}`,
   "frame-ancestors 'none'",
   "form-action 'self' https://checkout.stripe.com",
   "base-uri 'self'",

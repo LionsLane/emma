@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Orb } from "@/components/Orb";
-import { CLOUD } from "@/lib/supabase/env";
+import { CLOUD, GOOGLE_CLIENT_ID } from "@/lib/supabase/env";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 // Only allow same-site relative redirects after sign-in (no open redirects).
@@ -101,7 +101,7 @@ export function SignIn() {
           </div>
           <button className="btn ai" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a code"}</button>
           <div className="auth-or"><span>or</span></div>
-          <button className="btn" type="button" onClick={google}><GoogleMark />Continue with Google</button>
+          <GoogleSignIn next={next} onError={setError} fallback={<button className="btn" type="button" onClick={google}><GoogleMark />Continue with Google</button>} />
           {canPasskey && <button className="btn" type="button" onClick={passkey} disabled={busy}>Sign in with a passkey</button>}
         </form>
       ) : (
@@ -121,6 +121,90 @@ export function SignIn() {
         By continuing you agree to the <Link href="/legal/terms" className="link">Terms</Link> and <Link href="/legal/privacy" className="link">Privacy Policy</Link>.
       </p>
     </AuthFrame>
+  );
+}
+
+// ---------------------------------------------------------------- Google's own button
+
+type GsiId = {
+  initialize: (o: { client_id: string; callback: (r: { credential?: string }) => void; nonce: string; ux_mode?: "popup"; use_fedcm_for_button?: boolean; itp_support?: boolean; context?: string }) => void;
+  renderButton: (el: HTMLElement, o: Record<string, string | number>) => void;
+};
+declare global { interface Window { google?: { accounts?: { id?: GsiId } } } }
+
+const GSI_SRC = "https://accounts.google.com/gsi/client";
+
+function loadGsi(): Promise<GsiId> {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.id) return resolve(window.google.accounts.id);
+    let el = document.querySelector<HTMLScriptElement>(`script[src="${GSI_SRC}"]`);
+    if (!el) { el = document.createElement("script"); el.src = GSI_SRC; el.async = true; document.head.appendChild(el); }
+    const timer = window.setTimeout(() => reject(new Error("timeout")), 6000);
+    el.addEventListener("load", () => { window.clearTimeout(timer); if (window.google?.accounts?.id) resolve(window.google.accounts.id); else reject(new Error("no gsi")); });
+    el.addEventListener("error", () => { window.clearTimeout(timer); reject(new Error("load failed")); });
+  });
+}
+
+async function sha256Hex(text: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function GoogleSignIn({ next, onError, fallback }: { next: string; onError: (m: string | null) => void; fallback: React.ReactNode }) {
+  const router = useRouter();
+  const box = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<"loading" | "ready" | "fallback" | "busy">(GOOGLE_CLIENT_ID ? "loading" : "fallback");
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    let live = true;
+    (async () => {
+      try {
+        const gsi = await loadGsi();
+        // Fresh nonce per page: Google signs its hash into the token, Supabase checks the raw value.
+        const raw = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
+        const hashed = await sha256Hex(raw);
+        if (!live || !box.current) return;
+        gsi.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          nonce: hashed,
+          ux_mode: "popup",
+          use_fedcm_for_button: true,
+          itp_support: true,
+          context: "signin",
+          callback: async ({ credential }) => {
+            if (!credential) { onError("Google sign-in didn't finish. Try again, or use your email to get a code."); return; }
+            setState("busy");
+            onError(null);
+            const { error } = await supabaseBrowser()!.auth.signInWithIdToken({ provider: "google", token: credential, nonce: raw });
+            if (error) {
+              console.error("[emma] google id token sign-in failed", error.code ?? "", error.message);
+              setState("ready");
+              onError("Google sign-in didn't finish. Try again, or use your email to get a code.");
+              return;
+            }
+            router.replace(next);
+            router.refresh();
+          },
+        });
+        const width = Math.min(400, Math.max(220, Math.round(box.current.parentElement?.clientWidth ?? 320)));
+        const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        gsi.renderButton(box.current, { type: "standard", theme: dark ? "filled_black" : "outline", size: "large", text: "continue_with", shape: "pill", logo_alignment: "center", width });
+        setState("ready");
+      } catch {
+        if (live) setState("fallback");
+      }
+    })();
+    return () => { live = false; };
+  }, [next, onError, router]);
+
+  if (state === "fallback") return <>{fallback}</>;
+  return (
+    <div className="gsi-wrap" aria-busy={state !== "ready"}>
+      <div ref={box} style={{ display: state === "busy" ? "none" : "flex", justifyContent: "center", minHeight: 44 }} />
+      {state === "loading" && <div className="small muted" style={{ textAlign: "center" }}>Loading Google sign-in…</div>}
+      {state === "busy" && <div className="small muted" style={{ textAlign: "center" }}>Signing you in with Google…</div>}
+    </div>
   );
 }
 
