@@ -57,7 +57,7 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Paystack | Test key in Vercel; Test Callback `…/app/billing?paystack=1` and Test Webhook `…/api/billing/paystack/webhook` saved in the dashboard; `paystacktest.mjs` 9/9 | Live for staff tests; customers need compliance (5 sections) and live keys |
 | M-Pesa | Daraja sandbox app "EMMA" (174379), staff only | Sandbox tested; go-live waits for a Till or PayBill |
 | Search | Search Console verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; Bing Webmaster verified (meta `msvalidate.01`), sitemap submitted; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Ahrefs Webmaster Tools waits for the owner's sign-in (API plan too small) |
-| Analytics | Vercel Web Analytics (cookieless); GA4 property EMMA `G-E9PQVEK9RS`, loaded only after consent (`src/components/Consent.tsx`) | Live |
+| Analytics | Vercel Web Analytics (cookieless) and GA4 property EMMA `G-E9PQVEK9RS`, both loaded only after consent (`src/components/Consent.tsx`) | Live |
 | Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
 
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.

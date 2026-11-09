@@ -56,7 +56,7 @@
 | AI | `@anthropic-ai/sdk` | 0.132.1 |
 | Cards | `stripe` (API 2026-08-26.dahlia) | 22.6.2 |
 | M-Pesa | Daraja REST (fetch, no SDK) | — |
-| Analytics | `@vercel/analytics` (cookieless) | 2.0.1 |
+| Analytics | `@vercel/analytics` (cookieless), mounted only after the visitor taps Allow (`src/components/Consent.tsx`) | 2.0.1 |
 | Mobile | Expo SDK 57, React Native 0.86.3, Expo Router, expo-sqlite (session storage), `expo/fetch` (streaming) | expo ~57.0.28 |
 | Tests | PGlite for RLS; mock Anthropic server for AI routes | pglite 0.5.8 |
 | Styling | Hand-written CSS with tokens (no Tailwind, no component kit) | — |

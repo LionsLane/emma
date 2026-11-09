@@ -1146,7 +1146,7 @@ Skeleton · empty state · error state · 360px layout · keyboard path · Usiku
 | AI | `@anthropic-ai/sdk` | 0.132.1 |
 | Cards | `stripe` (API 2026-08-26.dahlia) | 22.6.2 |
 | M-Pesa | Daraja REST (fetch, no SDK) | — |
-| Analytics | `@vercel/analytics` (cookieless) | 2.0.1 |
+| Analytics | `@vercel/analytics` (cookieless), mounted only after the visitor taps Allow (`src/components/Consent.tsx`) | 2.0.1 |
 | Mobile | Expo SDK 57, React Native 0.86.3, Expo Router, expo-sqlite (session storage), `expo/fetch` (streaming) | expo ~57.0.28 |
 | Tests | PGlite for RLS; mock Anthropic server for AI routes | pglite 0.5.8 |
 | Styling | Hand-written CSS with tokens (no Tailwind, no component kit) | — |
@@ -1887,7 +1887,7 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 ### 3. Controls by layer
 
 #### Identity and sessions
-- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. `getClaims()` verifies the JWT signature on every API call.
+- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. Google's script loads only after the visitor taps Continue with Google (our own button first), so opening /signin sends nothing to Google. `getClaims()` verifies the JWT signature on every API call.
 - Two-step: a user whose session is `aal1` is refused by every API (`401 {mfa:true}`) when Supabase's admin API lists a verified factor for them. The factor list never comes from the session cookie, which the browser can edit; `src/proxy.ts` uses the cookie only to steer screens.
 - HttpOnly cookies refreshed by `src/proxy.ts`; mobile stores the session in expo-sqlite-backed localStorage and sends a Bearer token.
 - `user_metadata` is never used for authorisation; staff is `profiles.is_staff`, server-only.
@@ -1933,7 +1933,7 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 | Input validation | zod everywhere. |
 | Logging | Done. **Before scale:** log drain. |
 | Backups | **Before taking payments:** Supabase Pro (daily backups + point-in-time recovery). |
-| Monitoring | Vercel Analytics (cookieless). **Before scale:** error tracking (Sentry or Vercel Observability) + alerts on 5xx and AI cost spikes. |
+| Monitoring | Vercel Analytics (cookieless, only after consent). **Before scale:** error tracking (Sentry or Vercel Observability) + alerts on 5xx and AI cost spikes. |
 | Dependencies | Web: `npm audit` 0. Mobile: 28 advisories inside Expo SDK 57's tree (build tooling); take Expo patch releases and re-audit before each store build. Enable Dependabot. |
 
 ### 5. Accepted risks
@@ -2119,7 +2119,7 @@ Who we are · What we collect (account email and name, workspace content, contac
 The service · Your account · Plans and payment (Free/Pro/Max, M-Pesa prepaid 30 days, cards renew monthly) · Acceptable use (no spam or unsolicited marketing, no contact without a lawful basis, no false claims, consent is the user's responsibility) · **AI-generated content** (EMMA can be wrong; you review and are responsible for what you publish; researched leads are unverified) · Your content (you own it and EMMA's outputs made for you; processed only to provide the service; export any time. Consider adding an explicit "not used to train models" line once the processor terms are confirmed) · Availability and changes · Liability (capped at fees paid in the last 3 months) · Ending the agreement · Law (Kenya) · Contact.
 
 #### Cookie Notice `/legal/cookies`
-Strictly necessary cookies only (session, CSRF-safe auth); cookieless analytics; Stripe sets its own cookies on its checkout page. No consent banner needed because nothing non-essential is set.
+Strictly necessary cookies and storage need no consent (session, CSRF-safe auth, `emma-cloud`, `emma-consent`). Every analytics script (Google Analytics and Vercel Web Analytics) and every other third-party script waits for consent: the consent bar asks first, nothing loads until the visitor taps Allow, No thanks is remembered, and Cookie settings in the footer reopens the choice. Google's sign-in script loads only when the visitor taps Continue with Google. Stripe and Paystack set their own cookies on their checkout pages.
 
 #### Refund Policy `/legal/refunds`
 First paid-plan payment refunded in full within 7 days · later payments not refunded but plans can stop any time · if something went wrong (double charge, failed activation) we fix or refund · how to ask (privacy/company email).
@@ -2215,7 +2215,7 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Paystack | Test key in Vercel; Test Callback `…/app/billing?paystack=1` and Test Webhook `…/api/billing/paystack/webhook` saved in the dashboard; `paystacktest.mjs` 9/9 | Live for staff tests; customers need compliance (5 sections) and live keys |
 | M-Pesa | Daraja sandbox app "EMMA" (174379), staff only | Sandbox tested; go-live waits for a Till or PayBill |
 | Search | Search Console verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; Bing Webmaster verified (meta `msvalidate.01`), sitemap submitted; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Ahrefs Webmaster Tools waits for the owner's sign-in (API plan too small) |
-| Analytics | Vercel Web Analytics (cookieless); GA4 property EMMA `G-E9PQVEK9RS`, loaded only after consent (`src/components/Consent.tsx`) | Live |
+| Analytics | Vercel Web Analytics (cookieless) and GA4 property EMMA `G-E9PQVEK9RS`, both loaded only after consent (`src/components/Consent.tsx`) | Live |
 | Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
 
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.

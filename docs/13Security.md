@@ -35,7 +35,7 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 ## 3. Controls by layer
 
 ### Identity and sessions
-- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. `getClaims()` verifies the JWT signature on every API call.
+- Supabase Auth: email OTP (6 digits), email link (`/auth/confirm`, token hash), passkeys, and Google on web. Google uses Google's own button (`accounts.google.com/gsi`, ID token with a per-page SHA-256 nonce, `signInWithIdToken`), so Google's screen names emma.lionslane.co.ke; the redirect flow is the fallback. Google's script loads only after the visitor taps Continue with Google (our own button first), so opening /signin sends nothing to Google. `getClaims()` verifies the JWT signature on every API call.
 - Two-step: a user whose session is `aal1` is refused by every API (`401 {mfa:true}`) when Supabase's admin API lists a verified factor for them. The factor list never comes from the session cookie, which the browser can edit; `src/proxy.ts` uses the cookie only to steer screens.
 - HttpOnly cookies refreshed by `src/proxy.ts`; mobile stores the session in expo-sqlite-backed localStorage and sends a Bearer token.
 - `user_metadata` is never used for authorisation; staff is `profiles.is_staff`, server-only.
@@ -81,7 +81,7 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 | Input validation | zod everywhere. |
 | Logging | Done. **Before scale:** log drain. |
 | Backups | **Before taking payments:** Supabase Pro (daily backups + point-in-time recovery). |
-| Monitoring | Vercel Analytics (cookieless). **Before scale:** error tracking (Sentry or Vercel Observability) + alerts on 5xx and AI cost spikes. |
+| Monitoring | Vercel Analytics (cookieless, only after consent). **Before scale:** error tracking (Sentry or Vercel Observability) + alerts on 5xx and AI cost spikes. |
 | Dependencies | Web: `npm audit` 0. Mobile: 28 advisories inside Expo SDK 57's tree (build tooling); take Expo patch releases and re-audit before each store build. Enable Dependabot. |
 
 ## 5. Accepted risks

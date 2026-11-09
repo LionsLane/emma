@@ -150,13 +150,17 @@ async function sha256Hex(text: string) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Google's script is a third party, so it loads only when someone taps "Continue with Google";
+// opening the sign-in page sends nothing to Google. Google's own button then takes the second tap
+// (its pop-up has to start from a tap inside Google's button).
 function GoogleSignIn({ next, onError, fallback, redirect }: { next: string; onError: (m: string | null) => void; fallback: React.ReactNode; redirect: () => void }) {
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<"loading" | "ready" | "fallback" | "busy">(GOOGLE_CLIENT_ID ? "loading" : "fallback");
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "fallback" | "busy">(GOOGLE_CLIENT_ID ? "idle" : "fallback");
+  const wanted = state !== "idle" && state !== "fallback";
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
+    if (!GOOGLE_CLIENT_ID || !wanted) return;
     let live = true;
     (async () => {
       try {
@@ -197,11 +201,12 @@ function GoogleSignIn({ next, onError, fallback, redirect }: { next: string; onE
       }
     })();
     return () => { live = false; };
-  }, [next, onError, router]);
+  }, [wanted, next, onError, router]);
 
   if (state === "fallback") return <>{fallback}</>;
+  if (state === "idle") return <button className="btn" type="button" onClick={() => setState("loading")}><GoogleMark />Continue with Google</button>;
   return (
-    <div className="gsi-wrap" aria-busy={state !== "ready"}>
+    <div className="gsi-wrap" aria-busy={state !== "ready"} aria-live="polite">
       <div ref={box} style={{ display: state === "busy" ? "none" : "flex", justifyContent: "center", minHeight: 44 }} />
       {state === "loading" && <div className="small muted" style={{ textAlign: "center" }}>Loading Google sign-in…</div>}
       {state === "busy" && <div className="small muted" style={{ textAlign: "center" }}>Signing you in with Google…</div>}
