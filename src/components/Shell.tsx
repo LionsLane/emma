@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useEmma } from "@/lib/store";
 import { Orb } from "./Orb";
 import { PageSkeleton, Sheet, Sk } from "./ui";
 import { Composer, QuickCommands, Thread } from "./Chat";
 import { useHealth } from "./health";
 import { AccountMenu, BILLING_NAV, CommandPalette, JURY_NAV, NAV, PROFILE_NAV, TabBar, Toasts, UpgradeModal, UsageMeter, UserMenu } from "./Chrome";
-import { IconChat, IconMenu, IconRefresh, IconSearch } from "./icons";
+import { IconChat, IconClose, IconMenu, IconRefresh, IconSearch } from "./icons";
+
+// Sidebar sections (Command Center sits above them). Every NAV entry appears in exactly one group.
+const NAV_GROUPS: { label: string; hrefs: string[] }[] = [
+  { label: "Plan & create", hrefs: ["/app/dashboard", "/app/calendar", "/app/campaigns", "/app/library"] },
+  { label: "Customers", hrefs: ["/app/leads", "/app/email"] },
+  { label: "Grow", hrefs: ["/app/search", "/app/catalog", "/app/roi"] },
+];
 
 const TITLES: Record<string, string> = Object.fromEntries(
   [...NAV, JURY_NAV, PROFILE_NAV, BILLING_NAV].map((n) => [n.href, n.label]),
@@ -35,6 +42,32 @@ export function Shell({ children }: { children: ReactNode }) {
 
   useEffect(() => setHydrated(true), []);
   useEffect(() => setNavOpen(false), [pathname]);
+
+  // Phone drawer: Escape closes it, the page behind can't scroll, and focus moves in and back out.
+  const menuBtn = useRef<HTMLButtonElement>(null);
+  const sideRef = useRef<HTMLElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const on = () => setNarrow(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setNavOpen(false); };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    (sideRef.current?.querySelector<HTMLElement>(".nav a.active") ?? sideRef.current?.querySelector<HTMLElement>(".nav a"))?.focus();
+    const btn = menuBtn.current;
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; btn?.focus(); };
+  }, [navOpen]);
+  // Keep the current page's link in view inside the sidebar's own scroll area.
+  useEffect(() => {
+    sideRef.current?.querySelector<HTMLElement>(".nav a.active")?.scrollIntoView({ block: "nearest" });
+  }, [pathname, hydrated]);
 
   // Cloud: who is this, and do they have a workspace yet?
   useEffect(() => {
@@ -89,24 +122,36 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
       <a href="#main" className="skip">Skip to content</a>
-      {navOpen && <div className="scrim" style={{ zIndex: 35 }} onClick={() => setNavOpen(false)} />}
-      <aside className={`sidebar ${navOpen ? "open" : ""}`} aria-label="Sidebar">
-        <Link href="/app" className="brand" aria-label="EMMA home">
-          <Orb size={38} busy={busy} />
-          <div>
-            <div className="brand-word">EMMA</div>
-            <div className="brand-sub">by <b>LionsLane</b></div>
+      {navOpen && <div className="scrim" style={{ zIndex: 65 }} onClick={() => setNavOpen(false)} aria-hidden="true" />}
+      <aside ref={sideRef} id="app-sidebar" className={`sidebar ${navOpen ? "open" : ""}`} aria-label="Sidebar"
+        {...(narrow && !navOpen ? { inert: true, "aria-hidden": true } : {})}>
+        <div className="sidebar-head">
+          <div className="row" style={{ gap: 8, flexWrap: "nowrap" }}>
+            <Link href="/app" className="brand" aria-label="EMMA home">
+              <Orb size={38} busy={busy} />
+              <div>
+                <div className="brand-word">EMMA</div>
+                <div className="brand-sub">by <b>LionsLane</b></div>
+              </div>
+            </Link>
+            <button className="btn ghost sm sidebar-close" onClick={() => setNavOpen(false)} aria-label="Close menu"><IconClose /></button>
           </div>
-        </Link>
-        <button className="btn ghost sm" style={{ justifyContent: "flex-start", color: "var(--muted)", marginBottom: 4 }} onClick={() => setPalette(true)}>
-          <IconSearch />Search or jump to…<span className="kbd-key" style={{ marginLeft: "auto" }}>Ctrl K</span>
-        </button>
-        <nav className="nav" aria-label="Main">
-          {link(NAV[0])}
-          <div className="nav-label">Operate</div>
-          {NAV.slice(1).map(link)}
-          {showJury && (<><div className="nav-label">Studio</div>{link(JURY_NAV)}</>)}
-        </nav>
+          <button className="btn ghost sm sidebar-search" onClick={() => { setNavOpen(false); setPalette(true); }}>
+            <IconSearch />Search or jump to…<span className="kbd-key" style={{ marginLeft: "auto" }}>Ctrl K</span>
+          </button>
+        </div>
+        <div className="sidebar-scroll">
+          <nav className="nav" aria-label="Main">
+            {link(NAV[0])}
+            {NAV_GROUPS.map((g) => (
+              <div key={g.label} className="nav-group" role="group" aria-label={g.label}>
+                <div className="nav-label" aria-hidden="true">{g.label}</div>
+                {g.hrefs.map((h) => NAV.find((n) => n.href === h)).filter((n): n is (typeof NAV)[number] => Boolean(n)).map(link)}
+              </div>
+            ))}
+            {showJury && (<div className="nav-group" role="group" aria-label="Studio"><div className="nav-label" aria-hidden="true">Studio</div>{link(JURY_NAV)}</div>)}
+          </nav>
+        </div>
         <div className="sidebar-foot">
           <UsageMeter />
           <AccountMenu />
@@ -115,7 +160,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <div className="main">
         <header className="topbar">
-          <button className="btn ghost sm menu-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><IconMenu /></button>
+          <button ref={menuBtn} className="btn ghost sm menu-btn" onClick={() => setNavOpen(true)} aria-label="Open menu" aria-expanded={navOpen} aria-controls="app-sidebar"><IconMenu /></button>
           <div style={{ minWidth: 0 }}>
             <div className="crumb">{ws.profile.name}</div>
             <h1>{TITLES[pathname] ?? "EMMA"}</h1>

@@ -66,6 +66,14 @@ export interface ClientProfile {
   currency: string;
   website: string;
   demo: boolean;
+  // Optional contact and search details (Search & AI uses them for schema, llms.txt and checks)
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+  hours?: string; // e.g. "Mo-Fr 08:00-18:00, Sa 09:00-14:00"
+  socials?: string[]; // profile URLs: Google Business Profile, Facebook, Instagram, TikTok, LinkedIn
+  faqs?: { q: string; a: string }[];
   // The six inputs that turn EMMA into a specific company's assistant
   sectors: string[];
   offerings: Offering[];
@@ -281,6 +289,70 @@ export interface UsageMonth extends UsageTotals {
   month: string; // YYYY-MM
 }
 
+// ---- Search & AI (SEO, AIO, GEO, AXO). Audits are measured facts about a public page;
+// visibility reports record what AI search said, with its sources.
+
+export type Pillar = "seo" | "aio" | "geo" | "axo";
+export type AuditStatus = "pass" | "warn" | "fail";
+
+export interface AuditCheck {
+  id: string;
+  pillar: Pillar;
+  label: string;
+  status: AuditStatus;
+  detail: string; // what we measured
+  fix?: string; // what to do about it
+  weight: number; // 1 to 3
+}
+
+export interface AuditFacts {
+  title: string;
+  description: string;
+  h1: string[];
+  words: number;
+  lang: string;
+  schemaTypes: string[];
+  images: number;
+  imagesNoAlt: number;
+  internalLinks: number;
+  externalLinks: number;
+  aiBots: Record<string, "allowed" | "blocked">;
+  hasSitemap: boolean;
+  hasLlms: boolean;
+  https: boolean;
+}
+
+export interface SearchAudit {
+  id: Id;
+  url: string;
+  finalUrl: string;
+  at: string;
+  status: number;
+  ms: number;
+  bytes: number;
+  scores: Record<Pillar, number> & { overall: number };
+  checks: AuditCheck[];
+  facts: AuditFacts;
+}
+
+export interface VisibilityQuery {
+  query: string;
+  mentioned: boolean; // the business is named in the answer
+  cited: boolean; // the business's own site is one of the sources
+  competitors: string[];
+  sources: { title: string; url: string }[];
+  note: string;
+}
+
+export interface VisibilityReport {
+  id: Id;
+  at: string;
+  business: string;
+  queries: VisibilityQuery[];
+  share: number; // 0 to 100: share of queries where the business is mentioned or cited
+  summary: string;
+}
+
 export interface Workspace {
   version: number;
   profile: ClientProfile;
@@ -295,6 +367,8 @@ export interface Workspace {
   history: MonthPoint[];
   juries: JuryCase[];
   usage: UsageMonth[];
+  audits?: SearchAudit[]; // newest first, last 12 kept
+  visibility?: VisibilityReport[]; // newest first, last 12 kept
 }
 
 // ---- Proposals: EMMA never writes straight into the workspace. She proposes,

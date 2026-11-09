@@ -47,6 +47,14 @@ Stream: `juror` (one per juror as it finishes, `JurorVerdict`) → `foreperson` 
 
 ---
 
+## Search & AI
+
+### `POST /api/search/audit`
+Auth (local demo only without accounts). `{ url, business?: { name, location } }` → `SearchAudit` (scores for `seo`, `aio`, `geo`, `axo`, `overall`; 31 checks with status, detail, fix; page facts). Fetches the page, `/robots.txt`, `/sitemap.xml` (or the one robots.txt lists) and `/llms.txt` through the SSRF-safe fetcher. 400 for non-public or malformed addresses, 429 past `auditsPerMonth`. No AI.
+
+### `POST /api/search/visibility` · Pro and Max
+Auth. `{ name, website, location, queries: string[1..3] }` → `VisibilityReport` (`share`, `summary`, per query: `mentioned`, `cited`, `competitors`, `sources`, `note`). One web search per query on the plan's model; one AI run per user; 402 past `visibilityPerMonth`, the search allowance or the cost cap.
+
 ## Proposals
 
 ### `POST /api/proposals/:id`

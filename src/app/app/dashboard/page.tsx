@@ -4,7 +4,8 @@ import { useEmma } from "@/lib/store";
 import { money, num, pct, relTime, shortDate, summary } from "@/lib/metrics";
 import { Meter, Panel, Stat } from "@/components/ui";
 import { Sparkline } from "@/components/Charts";
-import { IconCheck } from "@/components/icons";
+import { IconCheck, IconGlobe } from "@/components/icons";
+import Link from "next/link";
 
 export default function Dashboard() {
   const ws = useEmma((s) => s.ws);
@@ -31,6 +32,8 @@ export default function Dashboard() {
         <Stat label="Email open rate" value={pct(m.openRate)} foot="Across everything sent" />
         <Stat label="Content scheduled" value={num(m.published)} foot={`of ${ws.calendar.length} calendar entries`} />
       </div>
+
+      <SearchHealth />
 
       <div className="grid cols-3">
         <Panel title="EMMA performance">
@@ -90,5 +93,44 @@ export default function Dashboard() {
         </Panel>
       </div>
     </div>
+  );
+}
+
+function SearchHealth() {
+  // Select the stored arrays as-is; a fresh [] inside the selector would re-render forever.
+  const storedAudits = useEmma((s) => s.ws.audits);
+  const storedVis = useEmma((s) => s.ws.visibility);
+  const audits = storedAudits ?? [];
+  const a = audits[0], v = storedVis?.[0];
+  if (!a) {
+    return (
+      <Panel title="Search & AI">
+        <div className="row" style={{ justifyContent: "space-between", gap: 12 }}>
+          <span className="small muted">See how Google, AI Overviews, ChatGPT-style assistants and voice search see your website.</span>
+          <Link className="btn sm" href="/app/search"><IconGlobe />Run your first audit</Link>
+        </div>
+      </Panel>
+    );
+  }
+  const top = [...a.checks].filter((c) => c.status !== "pass").sort((x, y) => (x.status === "fail" ? 0 : 1) - (y.status === "fail" ? 0 : 1) || y.weight - x.weight)[0];
+  const pillars: [string, number, string][] = [["SEO", a.scores.seo, "Google and Bing results"], ["AIO", a.scores.aio, "Google AI Overviews"], ["GEO", a.scores.geo, "ChatGPT, Claude, Perplexity"], ["AXO", a.scores.axo, "Assistants and voice"]];
+  return (
+    <Panel title="Search & AI" hint={`${a.finalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")} · ${relTime(a.at)}`} right={<Link className="btn ghost sm" href="/app/search">Open</Link>}>
+      <div className="grid cols-3 dash-search">
+        <div className="stat" style={{ padding: 0 }}>
+          <div className="label">Search & AI score</div>
+          <div className="value">{a.scores.overall}<span className="small muted"> / 100</span></div>
+          <div className="foot">{audits.length > 1 ? <Sparkline values={[...audits].reverse().map((x) => x.scores.overall)} width={120} height={26} /> : "First audit"}</div>
+        </div>
+        <div className="stack" style={{ gap: 10 }}>
+          {pillars.map(([n, val, why]) => <Meter key={n} label={n} value={val / 100} why={why} />)}
+        </div>
+        <div className="stack" style={{ gap: 8 }}>
+          <div className="small muted">AI visibility</div>
+          <div style={{ fontWeight: 600 }}>{v ? `Named or cited in ${v.share}% of AI searches` : "Not checked yet"}</div>
+          {top && <><div className="small muted" style={{ marginTop: 6 }}>Top fix</div><div className="small"><b>{top.label}.</b> {top.fix}</div></>}
+        </div>
+      </div>
+    </Panel>
   );
 }

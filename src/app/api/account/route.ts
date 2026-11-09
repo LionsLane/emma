@@ -33,8 +33,8 @@ export async function GET(req: Request) {
     payments,
     user: { id: user.id, email: user.email, name: profile?.full_name ?? "", onboarded: Boolean(profile?.onboarded), staff: state.staff },
     plan: { id: p.id, name: p.name, priceKES: p.priceKES, model: p.modelLabel, periodEnd: state.periodEnd, provider: state.provider },
-    limits: { briefs: p.briefsPerMonth, searches: p.searchesPerMonth, jury: p.juryPerMonth, workspaces: p.workspaces, seats: p.seats, leads: limitLabel(p.leads) },
-    usage: { briefs: usage.briefs, searches: usage.searches, jury: usage.juries, costUSD: Number(usage.costUSD.toFixed(4)) },
+    limits: { briefs: p.briefsPerMonth, searches: p.searchesPerMonth, jury: p.juryPerMonth, audits: p.auditsPerMonth, visibility: p.visibilityPerMonth, workspaces: p.workspaces, seats: p.seats, leads: limitLabel(p.leads) },
+    usage: { briefs: usage.briefs, searches: usage.searches, jury: usage.juries, audits: usage.audits, visibility: usage.visibility, costUSD: Number(usage.costUSD.toFixed(4)) },
     workspaces: workspaces ?? [],
     plans: Object.values(PLANS).map((x) => ({ id: x.id, name: x.name, priceKES: x.priceKES, model: x.modelLabel, features: x.features, blurb: x.blurb })),
   });

@@ -12,7 +12,7 @@ import { applyProposal, KIND_LABEL } from "./proposals";
 import { seedWorkspace, WORKSPACE_VERSION } from "./seed";
 import { CLOUD } from "./supabase/env";
 import { supabaseBrowser } from "./supabase/browser";
-import type { AgentEvent, ClientProfile, JuryCase, JuryEvent, JuryRound, Proposal, UsageTotals, Workspace } from "./types";
+import type { AgentEvent, ClientProfile, JuryCase, JuryEvent, JuryRound, Proposal, SearchAudit, UsageTotals, VisibilityReport, Workspace } from "./types";
 
 export type { ChatMessage, ChatPart } from "./chat";
 
@@ -22,8 +22,8 @@ export interface Account {
   user: { id: string; email: string | null; name: string; onboarded: boolean; staff: boolean };
   plan: { id: "free" | "pro" | "max" | "demo"; name: string; priceKES: number; model: string; periodEnd: string | null; provider: string };
   payments?: { mpesa: boolean; paystack: boolean; card: boolean };
-  limits: { briefs: number; searches: number; jury: number; workspaces: number; seats: number; leads: string };
-  usage: { briefs: number; searches: number; jury: number; costUSD: number };
+  limits: { briefs: number; searches: number; jury: number; audits?: number; visibility?: number; workspaces: number; seats: number; leads: string };
+  usage: { briefs: number; searches: number; jury: number; audits?: number; visibility?: number; costUSD: number };
   workspaces: { id: string; name: string; owner_id: string; updated_at: string }[];
 }
 
@@ -76,6 +76,8 @@ interface EmmaState {
   patch: <K extends CollectionKey>(key: K, id: string, change: Partial<Workspace[K][number]>) => void;
   remove: (key: CollectionKey, id: string) => void;
   addActivity: (text: string, by: "emma" | "team") => void;
+  saveAudit: (a: SearchAudit) => void;
+  saveVisibility: (r: VisibilityReport) => void;
   resetWorkspace: () => void;
   importWorkspace: (ws: Workspace) => void;
 
@@ -344,6 +346,16 @@ export const useEmma = create<EmmaState>()(
         // ------------------------------------------------------------ workspace edits
 
         updateProfile: (p) => edit((ws) => ({ ...ws, profile: { ...ws.profile, ...p } })),
+        saveAudit: (a) => edit((ws) => ({
+          ...ws,
+          audits: [a, ...(ws.audits ?? []).filter((x) => x.id !== a.id)].slice(0, 12),
+          activity: [{ id: uid("ac"), at: a.at, by: "team" as const, text: `Site audit of ${a.finalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}: ${a.scores.overall}/100` }, ...ws.activity].slice(0, 60),
+        })),
+        saveVisibility: (r) => edit((ws) => ({
+          ...ws,
+          visibility: [r, ...(ws.visibility ?? []).filter((x) => x.id !== r.id)].slice(0, 12),
+          activity: [{ id: uid("ac"), at: r.at, by: "emma" as const, text: `AI-visibility check: ${r.business} found in ${r.share}% of AI searches` }, ...ws.activity].slice(0, 60),
+        })),
         patch: (key, id, change) => edit((ws) => ({ ...ws, [key]: (ws[key] as { id: string }[]).map((x) => (x.id === id ? { ...x, ...change } : x)) })),
         remove: (key, id) => edit((ws) => ({ ...ws, [key]: (ws[key] as { id: string }[]).filter((x) => x.id !== id) })),
         addActivity: (text, by) =>

@@ -51,6 +51,8 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 - JSON only (415), size limits (413), zod validation (400), Origin check for cookie requests (403), CORS only for listed origins with Bearer tokens.
 - The server never accepts a workspace, history, model, plan or price from the client.
 - Rate limits: plan quotas, cost caps, one AI run per user, 3 M-Pesa prompts per 10 minutes.
+- Website audits fetch user-supplied URLs through `src/lib/server/safefetch.ts` (SSRF guard): http/https only, ports 80/443, no credentials in the URL; the IP check runs inside the socket's DNS lookup, so private, loopback, link-local, CGNAT, multicast and cloud-metadata addresses (IPv4 and IPv6, including IPv4-mapped) are refused at connect time with no DNS-rebinding gap; every redirect is re-checked (max 4); 2.5 MB and 12 s caps. Tested by `scripts/searchtest.mjs` (11 refusal cases, including a public name that resolves to 127.0.0.1).
+- AI-visibility "cited" is computed from the real web-search results (the business's domain among the sources), never from the model's claim; "named" requires the business in the model's ranked list, not merely in its prose.
 
 ### AI
 - Propose-only tools; approval is a separate authenticated call by an editor.

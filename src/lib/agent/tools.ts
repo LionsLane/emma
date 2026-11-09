@@ -13,7 +13,7 @@ const reviewNote = z.string().optional().describe(
 );
 
 export const QueryInput = z.object({
-  section: z.enum(["calendar", "campaigns", "leads", "emails", "library", "catalog", "partners", "tasks", "compliance", "history", "activity", "overview"]),
+  section: z.enum(["calendar", "campaigns", "leads", "emails", "library", "catalog", "partners", "tasks", "compliance", "history", "activity", "search", "overview"]),
   search: z.string().optional().describe("Optional case-insensitive text filter across all fields."),
   limit: z.number().int().min(1).max(60).optional(),
 });
@@ -113,7 +113,7 @@ function schema(zodSchema: z.ZodType): Record<string, unknown> {
 export const CLIENT_TOOLS = [
   {
     name: "query_workspace",
-    description: "Read the client's workspace: calendar, campaigns (with spend and results), leads, emails, library, catalog (offerings with sales), partners, tasks, compliance checks, monthly history, recent activity, or an overview with counts. Use before planning or analysing.",
+    description: "Read the client's workspace: calendar, campaigns (with spend and results), leads, emails, library, catalog (offerings with sales), partners, tasks, compliance checks, monthly history, recent activity, search (the latest website audit for SEO, AI Overviews, AI assistants and voice, plus AI-visibility checks), or an overview with counts. Use before planning or analysing.",
     input_schema: schema(QueryInput),
   },
   {
@@ -248,6 +248,7 @@ function queryWorkspace(ws: Workspace, q: z.infer<typeof QueryInput>): string {
       calendar: ws.calendar.length, campaigns: ws.campaigns.length, leads: ws.leads.length,
       emails: ws.emails.length, library: ws.library.length, openTasks: ws.tasks.filter((t) => !t.done).length,
       complianceIssues: ws.compliance.filter((c) => c.status !== "ok").map((c) => c.item),
+      searchScore: ws.audits?.[0]?.scores.overall ?? null, aiVisibilityShare: ws.visibility?.[0]?.share ?? null,
     });
   }
   const source: unknown[] = {
@@ -262,6 +263,11 @@ function queryWorkspace(ws: Workspace, q: z.infer<typeof QueryInput>): string {
     compliance: ws.compliance,
     history: ws.history,
     activity: ws.activity,
+    // Latest audit's open issues and scores, plus recent AI-visibility results (sources trimmed).
+    search: [
+      ...(ws.audits ?? []).slice(0, 2).map((a) => ({ kind: "audit", url: a.finalUrl, at: a.at, scores: a.scores, issues: a.checks.filter((c) => c.status !== "pass").map(({ pillar, label, status, detail, fix }) => ({ pillar, label, status, detail, fix })) })),
+      ...(ws.visibility ?? []).slice(0, 2).map((v) => ({ kind: "visibility", at: v.at, share: v.share, summary: v.summary, queries: v.queries.map(({ query, mentioned, cited, competitors, note }) => ({ query, mentioned, cited, competitors, note })) })),
+    ],
   }[q.section];
   const needle = q.search?.toLowerCase();
   const rows = needle ? source.filter((r) => JSON.stringify(r).toLowerCase().includes(needle)) : source;

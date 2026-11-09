@@ -36,7 +36,8 @@ export const DOCS: Record<string, LegalDoc> = {
           <li><b>Sign-in security</b>: the two-step verification methods you add. For an authenticator app, our sign-in provider holds the shared secret; for a passkey, only a public key is stored. Your fingerprint, face or screen lock never leaves your device. A phone number, if you add text-message codes.</li>
           <li><b>Workspace content</b>: your business profile, calendar, campaigns, leads, emails, library and notes, and your conversations with EMMA.</li>
           <li><b>Leads</b>: contact details you add, and business contact details EMMA finds in public sources (always marked unverified and without consent).</li>
-          <li><b>Usage</b>: how many briefs and searches you use, and the AI processing they needed, so we can enforce plan limits and costs.</li>
+          <li><b>Search &amp; AI</b>: the public web address you ask EMMA to audit, and the results (page title, headings, structured data, and whether AI crawlers may read the site), kept in your workspace. EMMA only reads public pages; it never logs in or reads private addresses.</li>
+          <li><b>Usage</b>: how many briefs, searches, website audits and AI-visibility checks you use, and the AI processing they needed, so we can enforce plan limits and costs.</li>
           <li><b>Payments</b>: for M-Pesa, the phone number and the receipt. Card payments are handled by Stripe; we never see or store card numbers.</li>
           <li><b>Technical</b>: server logs (including IP address) kept briefly for security, and anonymous, cookie-free page statistics.</li>
         </ul>
@@ -65,7 +66,7 @@ export const DOCS: Record<string, LegalDoc> = {
             <tr><td>Safaricom</td><td>M-Pesa payments</td><td>Kenya</td></tr>
           </tbody>
         </table>
-        <p>When you brief EMMA, your message, the conversation and the relevant parts of your workspace are sent to Anthropic to generate the reply. Under its commercial terms, Anthropic does not use this data to train its models. Some providers process data outside Kenya; we rely on contractual safeguards for those transfers as the Act requires.</p>
+        <p>When you run an AI-visibility check, your business name, website, location and the searches you entered are sent to Anthropic, which runs those web searches. When you brief EMMA, your message, the conversation and the relevant parts of your workspace are sent to Anthropic to generate the reply. Under its commercial terms, Anthropic does not use this data to train its models. Some providers process data outside Kenya; we rely on contractual safeguards for those transfers as the Act requires.</p>
 
         <h2>How long we keep it</h2>
         <p>Workspace and account data for as long as your account is open. When you delete your account, we delete it within 30 days, except records the law requires us to keep (such as payment records, kept for the period required by Kenyan tax law). Security logs are kept for up to 90 days.</p>
@@ -230,7 +231,7 @@ export const DOCS: Record<string, LegalDoc> = {
         <p>EMMA runs on Claude models made by Anthropic: Claude Haiku 5.5 on Free, Claude Sonnet 5.5 on Pro and Claude Opus 5.5 on Max.</p>
 
         <h2>What is sent to the AI</h2>
-        <p>When you brief EMMA, your message, the conversation and the parts of your workspace EMMA needs for that brief are sent to Anthropic to produce the reply. On Pro and Max, EMMA can also search the web; she shows the sources she used. Under Anthropic&apos;s commercial terms, this data is not used to train its models, and we do not use your workspace to train any model.</p>
+        <p>When you brief EMMA, your message, the conversation and the parts of your workspace EMMA needs for that brief are sent to Anthropic to produce the reply. On Pro and Max, EMMA can also search the web; she shows the sources she used. AI-visibility checks (Pro and Max) report what AI search returned for your searches: whether your business is named is taken from the AI&apos;s answer, and whether your site is cited is checked against the real search results. Results change from day to day, so treat them as a snapshot, not a ranking guarantee. Under Anthropic&apos;s commercial terms, this data is not used to train its models, and we do not use your workspace to train any model.</p>
 
         <h2>You stay in control</h2>
         <ul>

@@ -13,11 +13,15 @@ Single source of truth for limits: `src/lib/plans.ts`. Payment code: `src/lib/se
 | Briefs / month | 15 | 30 | 35 |
 | Web searches / month | 0 | 15 | 40 |
 | Pitch Jury trials / month | 0 | 0 | 4 |
+| Website audits (Search & AI) / month | 5 | 30 | 100 |
+| AI-visibility checks / month | 0 | 4 | 12 |
 | Workspaces / seats | 1 / 1 | 1 / 1 | 3 / 3 |
 | Tickets (leads) stored | 50 | 1,000 | Unlimited |
 | Monthly AI-cost cap | USD 0.15 | USD 1.90 | USD 5.80 |
 
 Staff (`profiles.is_staff`) get Max limits at no charge.
+
+Website audits use no AI (usage kind `audit`, cost 0). AI-visibility checks use the plan's model with web search (kind `visibility`); each also spends up to 3 of the month's web searches and counts toward the AI-cost cap.
 
 ### Unit economics (at KES 130 ≈ USD 1)
 | | Pro | Max |

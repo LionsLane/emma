@@ -60,6 +60,8 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Analytics | Vercel Web Analytics (cookieless) and GA4 property EMMA `G-E9PQVEK9RS`, both loaded only after consent (`src/components/Consent.tsx`) | Live |
 | Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
 
+**Search & AI (9 Nov 2026):** `/app/search` with the free site audit (SEO, AIO, GEO, AXO), AI-visibility checks (Pro/Max), paste-ready fixes (LocalBusiness and FAQ schema, llms.txt, AI-crawler robots rules, title and description), a dashboard panel, and audit data in EMMA's `query_workspace`. Migration `20261109120000_search.sql` adds the `audit` and `visibility` usage kinds. Next phases from the emma.io comparison: Audiences and Automations (segments, IF-THEN recipes that propose, never send), then Smart links and funnels (tracked short links with QR, click-to-lead attribution, A/B copy).
+
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.
 
 ## 3. Phase 7: Deploy (owner-supplied items first)

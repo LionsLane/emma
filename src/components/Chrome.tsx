@@ -12,7 +12,7 @@ import { Modal } from "./ui";
 import { QUICK_COMMANDS } from "./Chat";
 import {
   IconAlert, IconBox, IconCalendar, IconChat, IconCheck, IconClose, IconCommand, IconDashboard, IconFolder, IconGavel, IconMail,
-  IconMegaphone, IconMenu, IconSearch, IconSettings, IconShield, IconUsers, IconBolt,
+  IconMegaphone, IconMenu, IconSearch, IconSettings, IconShield, IconUsers, IconBolt, IconGlobe,
 } from "./icons";
 
 export const NAV = [
@@ -21,6 +21,7 @@ export const NAV = [
   { href: "/app/calendar", label: "Content Calendar", short: "Calendar", icon: IconCalendar },
   { href: "/app/campaigns", label: "Campaigns", short: "Campaigns", icon: IconMegaphone },
   { href: "/app/leads", label: "Leads", short: "Leads", icon: IconUsers },
+  { href: "/app/search", label: "Search & AI", short: "Search", icon: IconGlobe },
   { href: "/app/email", label: "Email Hub", short: "Email", icon: IconMail },
   { href: "/app/library", label: "Content Library", short: "Library", icon: IconFolder },
   { href: "/app/catalog", label: "Catalog", short: "Catalog", icon: IconBox },

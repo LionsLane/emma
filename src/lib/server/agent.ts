@@ -17,7 +17,7 @@ export interface AgentRun {
 
 // Model-specific request settings. Haiku 5.5 has no server-side refusal
 // fallback, so it doesn't get the fallback beta.
-function modelSettings(model: Plan["model"]) {
+export function modelSettings(model: Plan["model"]) {
   const base = { model, thinking: { type: "adaptive" as const }, output_config: { effort: "medium" as const } };
   if (model === "claude-haiku-5-5") return base;
   return { ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };

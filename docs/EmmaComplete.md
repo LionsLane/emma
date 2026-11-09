@@ -1499,6 +1499,14 @@ Stream: `juror` (one per juror as it finishes, `JurorVerdict`) → `foreperson` 
 
 ---
 
+### Search & AI
+
+#### `POST /api/search/audit`
+Auth (local demo only without accounts). `{ url, business?: { name, location } }` → `SearchAudit` (scores for `seo`, `aio`, `geo`, `axo`, `overall`; 31 checks with status, detail, fix; page facts). Fetches the page, `/robots.txt`, `/sitemap.xml` (or the one robots.txt lists) and `/llms.txt` through the SSRF-safe fetcher. 400 for non-public or malformed addresses, 429 past `auditsPerMonth`. No AI.
+
+#### `POST /api/search/visibility` · Pro and Max
+Auth. `{ name, website, location, queries: string[1..3] }` → `VisibilityReport` (`share`, `summary`, per query: `mentioned`, `cited`, `competitors`, `sources`, `note`). One web search per query on the plan's model; one AI run per user; 402 past `visibilityPerMonth`, the search allowance or the cost cap.
+
 ### Proposals
 
 #### `POST /api/proposals/:id`
@@ -1749,11 +1757,15 @@ Single source of truth for limits: `src/lib/plans.ts`. Payment code: `src/lib/se
 | Briefs / month | 15 | 30 | 35 |
 | Web searches / month | 0 | 15 | 40 |
 | Pitch Jury trials / month | 0 | 0 | 4 |
+| Website audits (Search & AI) / month | 5 | 30 | 100 |
+| AI-visibility checks / month | 0 | 4 | 12 |
 | Workspaces / seats | 1 / 1 | 1 / 1 | 3 / 3 |
 | Tickets (leads) stored | 50 | 1,000 | Unlimited |
 | Monthly AI-cost cap | USD 0.15 | USD 1.90 | USD 5.80 |
 
 Staff (`profiles.is_staff`) get Max limits at no charge.
+
+Website audits use no AI (usage kind `audit`, cost 0). AI-visibility checks use the plan's model with web search (kind `visibility`); each also spends up to 3 of the month's web searches and counts toward the AI-cost cap.
 
 #### Unit economics (at KES 130 ≈ USD 1)
 | | Pro | Max |
@@ -1903,6 +1915,8 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 - JSON only (415), size limits (413), zod validation (400), Origin check for cookie requests (403), CORS only for listed origins with Bearer tokens.
 - The server never accepts a workspace, history, model, plan or price from the client.
 - Rate limits: plan quotas, cost caps, one AI run per user, 3 M-Pesa prompts per 10 minutes.
+- Website audits fetch user-supplied URLs through `src/lib/server/safefetch.ts` (SSRF guard): http/https only, ports 80/443, no credentials in the URL; the IP check runs inside the socket's DNS lookup, so private, loopback, link-local, CGNAT, multicast and cloud-metadata addresses (IPv4 and IPv6, including IPv4-mapped) are refused at connect time with no DNS-rebinding gap; every redirect is re-checked (max 4); 2.5 MB and 12 s caps. Tested by `scripts/searchtest.mjs` (11 refusal cases, including a public name that resolves to 127.0.0.1).
+- AI-visibility "cited" is computed from the real web-search results (the business's domain among the sources), never from the model's claim; "named" requires the business in the model's ranked list, not merely in its prose.
 
 #### AI
 - Propose-only tools; approval is a separate authenticated call by an editor.
@@ -2217,6 +2231,8 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Search | Search Console verified (`public/googlecb964cb588b1659e.html`), sitemap submitted, home indexing requested; Bing Webmaster verified (meta `msvalidate.01`), sitemap submitted; IndexNow key `public/596183bc555688e726c2a523cae56da2.txt` (10 URLs accepted) | Live; Ahrefs Webmaster Tools waits for the owner's sign-in (API plan too small) |
 | Analytics | Vercel Web Analytics (cookieless) and GA4 property EMMA `G-E9PQVEK9RS`, both loaded only after consent (`src/components/Consent.tsx`) | Live |
 | Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
+
+**Search & AI (9 Nov 2026):** `/app/search` with the free site audit (SEO, AIO, GEO, AXO), AI-visibility checks (Pro/Max), paste-ready fixes (LocalBusiness and FAQ schema, llms.txt, AI-crawler robots rules, title and description), a dashboard panel, and audit data in EMMA's `query_workspace`. Migration `20261109120000_search.sql` adds the `audit` and `visibility` usage kinds. Next phases from the emma.io comparison: Audiences and Automations (segments, IF-THEN recipes that propose, never send), then Smart links and funnels (tracked short links with QR, click-to-lead attribution, A/B copy).
 
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.
 
