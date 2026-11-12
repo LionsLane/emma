@@ -304,7 +304,8 @@ function DeleteAccount() {
 function UsageAndData() {
   const mode = useEmma((s) => s.mode);
   const account = useEmma((s) => s.account);
-  const usage = useEmma((s) => s.ws.usage ?? []);
+  const storedUsage = useEmma((s) => s.ws.usage);
+  const usage = storedUsage ?? [];
   const month = new Date().toISOString().slice(0, 7);
   const cur = usage.find((m) => m.month === month);
   const cloud = mode === "cloud" && account;

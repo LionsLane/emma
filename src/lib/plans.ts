@@ -14,6 +14,7 @@ export interface Plan {
   juryPerMonth: number; // 0 = no Pitch Jury
   auditsPerMonth: number; // Search & AI site audits (no AI cost)
   visibilityPerMonth: number; // AI-visibility checks (AI + web search); 0 = not on this plan
+  smartLinks: number; // tracked short links per workspace (no AI cost)
   workspaces: number;
   seats: number;
   leads: number; // Infinity = unlimited
@@ -26,23 +27,23 @@ export const PLANS: Record<PlanId, Plan> = {
   free: {
     id: "free", name: "Free", priceKES: 0,
     model: "claude-haiku-5-5", modelLabel: "Claude Haiku 5.5",
-    briefsPerMonth: 15, searchesPerMonth: 0, juryPerMonth: 0, auditsPerMonth: 5, visibilityPerMonth: 0, workspaces: 1, seats: 1, leads: 50, costCapUSD: 0.15,
+    briefsPerMonth: 15, searchesPerMonth: 0, juryPerMonth: 0, auditsPerMonth: 5, visibilityPerMonth: 0, smartLinks: 10, workspaces: 1, seats: 1, leads: 50, costCapUSD: 0.15,
     blurb: "Try EMMA on your business. No card needed.",
-    features: ["15 briefs a month", "Content calendar, leads, email and library", "5 website audits for Google and AI search", "50 leads", "Approve everything before it goes out"],
+    features: ["15 briefs a month", "Content calendar, leads, email and library", "5 website audits for Google and AI search", "10 smart links with QR codes", "Audiences and follow-up automations", "50 leads", "Approve everything before it goes out"],
   },
   pro: {
     id: "pro", name: "Pro", priceKES: 500,
     model: "claude-sonnet-5-5", modelLabel: "Claude Sonnet 5.5",
-    briefsPerMonth: 30, searchesPerMonth: 15, juryPerMonth: 0, auditsPerMonth: 30, visibilityPerMonth: 4, workspaces: 1, seats: 1, leads: 1000, costCapUSD: 1.9,
+    briefsPerMonth: 30, searchesPerMonth: 15, juryPerMonth: 0, auditsPerMonth: 30, visibilityPerMonth: 4, smartLinks: 100, workspaces: 1, seats: 1, leads: 1000, costCapUSD: 1.9,
     blurb: "For owners who market every week.",
-    features: ["30 briefs a month on a smarter model", "Web research: trends and prospects", "30 website audits, 4 AI-visibility checks", "1,000 leads", "Campaign planning and ad copy"],
+    features: ["30 briefs a month on a smarter model", "Web research: trends and prospects", "30 website audits, 4 AI-visibility checks", "100 smart links, A/B tests", "1,000 leads", "Campaign planning and ad copy"],
   },
   max: {
     id: "max", name: "Max", priceKES: 1500,
     model: "claude-opus-5-5", modelLabel: "Claude Opus 5.5",
-    briefsPerMonth: 35, searchesPerMonth: 40, juryPerMonth: 4, auditsPerMonth: 100, visibilityPerMonth: 12, workspaces: 3, seats: 3, leads: Number.POSITIVE_INFINITY, costCapUSD: 5.8,
+    briefsPerMonth: 35, searchesPerMonth: 40, juryPerMonth: 4, auditsPerMonth: 100, visibilityPerMonth: 12, smartLinks: 1000, workspaces: 3, seats: 3, leads: Number.POSITIVE_INFINITY, costCapUSD: 5.8,
     blurb: "Our best thinking, for growing teams and multiple brands.",
-    features: ["35 briefs a month on our best model", "40 web searches", "100 website audits, 12 AI-visibility checks", "3 brands, 3 team seats", "Pitch Jury: test offers before you spend", "Unlimited leads"],
+    features: ["35 briefs a month on our best model", "40 web searches", "100 website audits, 12 AI-visibility checks", "1,000 smart links", "3 brands, 3 team seats", "Pitch Jury: test offers before you spend", "Unlimited leads"],
   },
 };
 

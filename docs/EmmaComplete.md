@@ -1507,6 +1507,20 @@ Auth (local demo only without accounts). `{ url, business?: { name, location } }
 #### `POST /api/search/visibility` · Pro and Max
 Auth. `{ name, website, location, queries: string[1..3] }` → `VisibilityReport` (`share`, `summary`, per query: `mentioned`, `cited`, `competitors`, `sources`, `note`). One web search per query on the plan's model; one AI run per user; 402 past `visibilityPerMonth`, the search allowance or the cost cap.
 
+### Smart links
+
+#### `GET /api/links?workspaceId=<uuid>`
+Auth, members. → `{ limit, base, links: [{ code, name, destination, utm_*, ab_group, archived, created_at, short, stats: { clicks, unique, bots, last7, daily[30], referrers, devices, countries } }] }` over the last 90 days, bots excluded from clicks.
+
+#### `POST /api/links`
+Auth, editors. `{ workspaceId, name, destination, channel?, utm?: { source, medium, campaign, content }, abGroup? }` → 201 `{ link }`. 400 bad destination, 402 past the plan's active links, 403 viewers and non-members, 429 past 20 an hour.
+
+#### `PATCH /api/links/<code>`
+Auth, editors. `{ name?, archived? }`. Switching on re-checks the plan limit (402).
+
+#### `GET /l/<code>` (public)
+Records one click and redirects (302) with the link's UTM tags added (existing tags kept). 404 page for unknown or switched-off codes.
+
 ### Proposals
 
 #### `POST /api/proposals/:id`
@@ -1759,6 +1773,8 @@ Single source of truth for limits: `src/lib/plans.ts`. Payment code: `src/lib/se
 | Pitch Jury trials / month | 0 | 0 | 4 |
 | Website audits (Search & AI) / month | 5 | 30 | 100 |
 | AI-visibility checks / month | 0 | 4 | 12 |
+| Active smart links (per workspace) | 10 | 100 | 1,000 |
+| Audiences and automations | Included | Included | Included |
 | Workspaces / seats | 1 / 1 | 1 / 1 | 3 / 3 |
 | Tickets (leads) stored | 50 | 1,000 | Unlimited |
 | Monthly AI-cost cap | USD 0.15 | USD 1.90 | USD 5.80 |
@@ -1916,6 +1932,8 @@ Reviewed the way an attacker would look at it: who could spend our money, read s
 - The server never accepts a workspace, history, model, plan or price from the client.
 - Rate limits: plan quotas, cost caps, one AI run per user, 3 M-Pesa prompts per 10 minutes.
 - Website audits fetch user-supplied URLs through `src/lib/server/safefetch.ts` (SSRF guard): http/https only, ports 80/443, no credentials in the URL; the IP check runs inside the socket's DNS lookup, so private, loopback, link-local, CGNAT, multicast and cloud-metadata addresses (IPv4 and IPv6, including IPv4-mapped) are refused at connect time with no DNS-rebinding gap; every redirect is re-checked (max 4); 2.5 MB and 12 s caps. Tested by `scripts/searchtest.mjs` (11 refusal cases, including a public name that resolves to 127.0.0.1).
+- Smart links (`/l/<code>`): destinations must be http(s) with no credentials and can't point at another smart link; creation needs editor access, is capped by plan and at 20 per user per hour; a switched-off link returns a 404 page with the abuse address. Clicks store no IP address: the visitor id is SHA-256 of `LINK_HASH_SECRET`, the day, IP and user agent, so it can't be reversed or followed across days. Link previews and bots are counted apart from people. RLS: members read their workspace's links and clicks; only the server inserts clicks. Tested by `scripts/growthtest.mjs` (14 checks, including cross-user isolation).
+- Automations never send anything: each match is a suggestion a person approves, which opens their own WhatsApp, SMS or email app through an allow-listed link (`safeActionHref`: wa.me, sms:, mailto: only). Messages to leads without marketing consent are held back unless the lead is already in a conversation (contacted, qualified, proposal).
 - AI-visibility "cited" is computed from the real web-search results (the business's domain among the sources), never from the model's claim; "named" requires the business in the model's ranked list, not merely in its prose.
 
 #### AI
@@ -2233,6 +2251,8 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 | Live tests | `e2e.mjs` 27/27, `mfatest.mjs` 7/7, `linktest.mjs` 5/5, `paygatetest.mjs` 2/2, `mpesatest.mjs` 5/5, `paystacktest.mjs` 9/9 (pass `--app=https://emma.lionslane.co.ke`) | All passed 7 Nov 2026 |
 
 **Search & AI (9 Nov 2026):** `/app/search` with the free site audit (SEO, AIO, GEO, AXO), AI-visibility checks (Pro/Max), paste-ready fixes (LocalBusiness and FAQ schema, llms.txt, AI-crawler robots rules, title and description), a dashboard panel, and audit data in EMMA's `query_workspace`. Migration `20261109120000_search.sql` adds the `audit` and `visibility` usage kinds. Next phases from the emma.io comparison: Audiences and Automations (segments, IF-THEN recipes that propose, never send), then Smart links and funnels (tracked short links with QR, click-to-lead attribution, A/B copy).
+
+**Growth suite (12 Nov 2026), answering emma.io's attribution, CRM, automation and A/B modules for small businesses instead of mobile apps:** Smart Links (`/app/links`: short links, channel UTM presets, QR codes in PNG and SVG, A/B pairs with a plain-language verdict, click analytics with people and bots apart), Audiences (`/app/audiences`: rule-based segments, starter audiences, consent-only CSV export), Automations (`/app/automations`: six recipes plus a builder; suggestions a person approves; consent hold-back; frequency caps), and dashboard panels (growth funnel, ready-for-you). Migration `20261109130000_links.sql`; `LINK_HASH_SECRET` in Vercel. Local builds on this 8 GB PC: `EMMA_BUILD_CPUS=2 npm run build`.
 
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.
 

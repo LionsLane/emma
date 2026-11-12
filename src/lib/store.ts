@@ -12,7 +12,8 @@ import { applyProposal, KIND_LABEL } from "./proposals";
 import { seedWorkspace, WORKSPACE_VERSION } from "./seed";
 import { CLOUD } from "./supabase/env";
 import { supabaseBrowser } from "./supabase/browser";
-import type { AgentEvent, ClientProfile, JuryCase, JuryEvent, JuryRound, Proposal, SearchAudit, UsageTotals, VisibilityReport, Workspace } from "./types";
+import type { AgentEvent, Automation, ClientProfile, JuryCase, JuryEvent, JuryRound, Proposal, SearchAudit, Segment, UsageTotals, VisibilityReport, Workspace } from "./types";
+import type { Suggestion } from "./automations";
 
 export type { ChatMessage, ChatPart } from "./chat";
 
@@ -77,6 +78,11 @@ interface EmmaState {
   remove: (key: CollectionKey, id: string) => void;
   addActivity: (text: string, by: "emma" | "team") => void;
   saveAudit: (a: SearchAudit) => void;
+  saveSegment: (seg: Segment) => void;
+  deleteSegment: (id: string) => void;
+  saveAutomation: (a: Automation) => void;
+  deleteAutomation: (id: string) => void;
+  resolveSuggestion: (s: Suggestion, how: "approve" | "skip") => void;
   saveVisibility: (r: VisibilityReport) => void;
   resetWorkspace: () => void;
   importWorkspace: (ws: Workspace) => void;
@@ -351,6 +357,37 @@ export const useEmma = create<EmmaState>()(
           audits: [a, ...(ws.audits ?? []).filter((x) => x.id !== a.id)].slice(0, 12),
           activity: [{ id: uid("ac"), at: a.at, by: "team" as const, text: `Site audit of ${a.finalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}: ${a.scores.overall}/100` }, ...ws.activity].slice(0, 60),
         })),
+        saveSegment: (seg) => edit((ws) => ({ ...ws, segments: [seg, ...(ws.segments ?? []).filter((x) => x.id !== seg.id)].slice(0, 50) })),
+        deleteSegment: (id) => edit((ws) => ({
+          ...ws,
+          segments: (ws.segments ?? []).filter((x) => x.id !== id),
+          automations: (ws.automations ?? []).map((a) => (a.segmentId === id ? { ...a, segmentId: undefined } : a)),
+        })),
+        saveAutomation: (a) => edit((ws) => ({ ...ws, automations: [a, ...(ws.automations ?? []).filter((x) => x.id !== a.id)].slice(0, 50) })),
+        deleteAutomation: (id) => edit((ws) => ({ ...ws, automations: (ws.automations ?? []).filter((x) => x.id !== id) })),
+        resolveSuggestion: (sg, how) => edit((ws) => {
+          const today = new Date().toISOString().slice(0, 10);
+          const targetId = sg.target.kind === "lead" ? sg.target.lead.id : sg.target.keyDate.id;
+          let next: Workspace = {
+            ...ws,
+            automations: (ws.automations ?? []).map((a) => (a.id === sg.automationId ? { ...a, fired: { ...a.fired, [targetId]: today } } : a)),
+          };
+          if (how === "skip") return next;
+          const due = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+          const act = (text: string) => ({ id: uid("ac"), at: new Date().toISOString(), by: "team" as const, text });
+          if (sg.action.kind === "task") {
+            next = { ...next, tasks: [{ id: uid("tk"), title: sg.text.slice(0, 200), due, owner: "Team", done: false, area: "Automation" }, ...next.tasks], activity: [act(`Automation "${sg.automationName}": task added`), ...next.activity].slice(0, 60) };
+          } else if (sg.target.kind === "lead") {
+            const lead = sg.target.lead;
+            const stage = sg.action.kind === "moveStage" ? sg.action.stage : lead.stage === "new" ? "contacted" : lead.stage;
+            next = {
+              ...next,
+              leads: next.leads.map((l) => (l.id === lead.id ? { ...l, stage, lastTouch: today } : l)),
+              activity: [act(sg.action.kind === "message" ? `Automation "${sg.automationName}": ${sg.action.channel} message to ${lead.name}` : `Automation "${sg.automationName}": ${lead.name} moved to ${stage}`), ...next.activity].slice(0, 60),
+            };
+          }
+          return next;
+        }),
         saveVisibility: (r) => edit((ws) => ({
           ...ws,
           visibility: [r, ...(ws.visibility ?? []).filter((x) => x.id !== r.id)].slice(0, 12),

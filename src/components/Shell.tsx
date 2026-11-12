@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useEmma } from "@/lib/store";
+import { evaluate } from "@/lib/automations";
 import { Orb } from "./Orb";
 import { PageSkeleton, Sheet, Sk } from "./ui";
 import { Composer, QuickCommands, Thread } from "./Chat";
@@ -14,8 +15,8 @@ import { IconChat, IconClose, IconMenu, IconRefresh, IconSearch } from "./icons"
 // Sidebar sections (Command Center sits above them). Every NAV entry appears in exactly one group.
 const NAV_GROUPS: { label: string; hrefs: string[] }[] = [
   { label: "Plan & create", hrefs: ["/app/dashboard", "/app/calendar", "/app/campaigns", "/app/library"] },
-  { label: "Customers", hrefs: ["/app/leads", "/app/email"] },
-  { label: "Grow", hrefs: ["/app/search", "/app/catalog", "/app/roi"] },
+  { label: "Customers", hrefs: ["/app/leads", "/app/audiences", "/app/automations", "/app/email"] },
+  { label: "Grow", hrefs: ["/app/search", "/app/links", "/app/catalog", "/app/roi"] },
 ];
 
 const TITLES: Record<string, string> = Object.fromEntries(
@@ -100,10 +101,12 @@ export function Shell({ children }: { children: ReactNode }) {
   const showJury = mode === "demo" || Boolean(account?.user.staff) || account?.plan.id === "max";
   const hotLeads = ws.leads.filter((l) => l.score >= 75 && l.stage !== "won" && l.stage !== "lost").length;
   const risks = ws.compliance.filter((c) => c.status === "risk").length;
+  const readyCount = evaluate(ws).suggestions.length;
   const counts: Record<string, { n: number; hot?: boolean } | undefined> = {
     "/app": pending ? { n: pending, hot: true } : undefined,
     "/app/leads": hotLeads ? { n: hotLeads } : undefined,
     "/app/roi": risks ? { n: risks, hot: true } : undefined,
+    "/app/automations": readyCount ? { n: readyCount, hot: true } : undefined,
   };
   const stateLabel = health.connected === false ? "Not connected" : busy ? "Working…" : "Online";
   const dotClass = health.connected === false ? "off" : busy ? "busy" : "";

@@ -55,6 +55,20 @@ Auth (local demo only without accounts). `{ url, business?: { name, location } }
 ### `POST /api/search/visibility` · Pro and Max
 Auth. `{ name, website, location, queries: string[1..3] }` → `VisibilityReport` (`share`, `summary`, per query: `mentioned`, `cited`, `competitors`, `sources`, `note`). One web search per query on the plan's model; one AI run per user; 402 past `visibilityPerMonth`, the search allowance or the cost cap.
 
+## Smart links
+
+### `GET /api/links?workspaceId=<uuid>`
+Auth, members. → `{ limit, base, links: [{ code, name, destination, utm_*, ab_group, archived, created_at, short, stats: { clicks, unique, bots, last7, daily[30], referrers, devices, countries } }] }` over the last 90 days, bots excluded from clicks.
+
+### `POST /api/links`
+Auth, editors. `{ workspaceId, name, destination, channel?, utm?: { source, medium, campaign, content }, abGroup? }` → 201 `{ link }`. 400 bad destination, 402 past the plan's active links, 403 viewers and non-members, 429 past 20 an hour.
+
+### `PATCH /api/links/<code>`
+Auth, editors. `{ name?, archived? }`. Switching on re-checks the plan limit (402).
+
+### `GET /l/<code>` (public)
+Records one click and redirects (302) with the link's UTM tags added (existing tags kept). 404 page for unknown or switched-off codes.
+
 ## Proposals
 
 ### `POST /api/proposals/:id`

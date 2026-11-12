@@ -62,6 +62,8 @@ Goal: the app looks and feels like 05–07, with no change to data flow or secur
 
 **Search & AI (9 Nov 2026):** `/app/search` with the free site audit (SEO, AIO, GEO, AXO), AI-visibility checks (Pro/Max), paste-ready fixes (LocalBusiness and FAQ schema, llms.txt, AI-crawler robots rules, title and description), a dashboard panel, and audit data in EMMA's `query_workspace`. Migration `20261109120000_search.sql` adds the `audit` and `visibility` usage kinds. Next phases from the emma.io comparison: Audiences and Automations (segments, IF-THEN recipes that propose, never send), then Smart links and funnels (tracked short links with QR, click-to-lead attribution, A/B copy).
 
+**Growth suite (12 Nov 2026), answering emma.io's attribution, CRM, automation and A/B modules for small businesses instead of mobile apps:** Smart Links (`/app/links`: short links, channel UTM presets, QR codes in PNG and SVG, A/B pairs with a plain-language verdict, click analytics with people and bots apart), Audiences (`/app/audiences`: rule-based segments, starter audiences, consent-only CSV export), Automations (`/app/automations`: six recipes plus a builder; suggestions a person approves; consent hold-back; frequency caps), and dashboard panels (growth funnel, ready-for-you). Migration `20261109130000_links.sql`; `LINK_HASH_SECRET` in Vercel. Local builds on this 8 GB PC: `EMMA_BUILD_CPUS=2 npm run build`.
+
 Still open: Paystack compliance and live keys, Kopo Kopo, Daraja go-live (Till or PayBill), Stripe verification, EMMA on the Lions Lane Google Business Profile, Ahrefs Webmaster Tools, Google brand verification (shows "EMMA" on Google's screen), Eve's Cloudflare destination.
 
 ## 3. Phase 7: Deploy (owner-supplied items first)

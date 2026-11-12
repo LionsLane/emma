@@ -672,3 +672,33 @@ table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
 .search-faq .input { flex: 1 1 0; min-width: 0; }
 @media (max-width: 1180px) { .search-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); } .search-scores > :first-child { grid-column: span 2; } .grid.cols-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .search-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); } .search-faq { flex-direction: column; align-items: stretch !important; } .grid.cols-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Smart links */
+.links-row { align-items: flex-start; gap: 12px; }
+.links-main { gap: 4px; }
+.links-channels { gap: 6px; }
+.links-channels .chip { cursor: pointer; padding: 6px 12px; font-size: 12.5px; background: transparent; }
+.links-channels .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .links-row { flex-wrap: wrap; }
+  .links-main { flex-basis: calc(100% - 30px); }
+  .links-num { flex-direction: row !important; align-items: center !important; gap: 10px !important; }
+  .links-actions { width: 100%; }
+  .links-channels .chip { min-height: 40px; }
+}
+
+/* Audiences and Automations */
+.switch { display: inline-flex; align-items: center; cursor: pointer; position: relative; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); font-size: 12px; font-weight: 600; color: var(--muted); min-width: 58px; justify-content: center; }
+.switch span svg { width: 12px; height: 12px; }
+.switch input:checked + span { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.auto-sug { align-items: flex-start; }
+.aud-rule > .select, .aud-rule > .input { flex: 1 1 0; min-width: 0; }
+@media (max-width: 640px) {
+  .auto-sug { flex-wrap: wrap; }
+  .auto-sug > .row { width: 100%; }
+  .aud-rule { flex-wrap: wrap !important; }
+  .aud-rule > .select, .aud-rule > .input { flex-basis: calc(50% - 8px); }
+}

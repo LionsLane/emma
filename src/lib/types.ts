@@ -353,6 +353,35 @@ export interface VisibilityReport {
   summary: string;
 }
 
+// ---- Audiences and Automations. Segments filter leads; automations suggest actions for a person
+// to approve (EMMA never sends on her own). Each automation remembers who it already covered.
+
+export type SegmentField = "stage" | "source" | "score" | "value" | "consent" | "verified" | "lastTouchDays" | "text";
+export type SegmentOp = "is" | "isNot" | "gte" | "lte" | "contains";
+export interface SegmentRule { field: SegmentField; op: SegmentOp; value: string }
+export interface Segment { id: Id; name: string; match: "all" | "any"; rules: SegmentRule[]; createdAt: string }
+
+export type AutomationTrigger =
+  | { kind: "newLead" }
+  | { kind: "stageQuiet"; stage: LeadStage; days: number } // in this stage, no contact for N days
+  | { kind: "hotLead"; score: number }
+  | { kind: "keyDate"; daysBefore: number };
+export type AutomationAction =
+  | { kind: "message"; channel: "whatsapp" | "email" | "sms"; text: string }
+  | { kind: "task"; title: string }
+  | { kind: "moveStage"; stage: LeadStage };
+export interface Automation {
+  id: Id;
+  name: string;
+  enabled: boolean;
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+  segmentId?: Id; // only leads in this audience
+  cooldownDays: number; // frequency cap per lead (or per key date)
+  fired: Record<string, string>; // lead or key-date id → ISO date last approved or skipped
+  createdAt: string;
+}
+
 export interface Workspace {
   version: number;
   profile: ClientProfile;
@@ -369,6 +398,8 @@ export interface Workspace {
   usage: UsageMonth[];
   audits?: SearchAudit[]; // newest first, last 12 kept
   visibility?: VisibilityReport[]; // newest first, last 12 kept
+  segments?: Segment[];
+  automations?: Automation[];
 }
 
 // ---- Proposals: EMMA never writes straight into the workspace. She proposes,

@@ -24,3 +24,13 @@ export function normaliseKenyanPhone(raw: string): string | null {
   const m = /^(?:254|0)?([17]\d{8})$/.exec(d);
   return m ? `254${m[1]}` : null;
 }
+
+// Links EMMA builds for an approved follow-up: WhatsApp click-to-chat, SMS or email only.
+export function safeActionHref(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  const v = raw.trim();
+  if (/^https:\/\/wa\.me\/\d{8,15}(\?text=[^\s]*)?$/.test(v)) return v;
+  if (/^sms:\+\d{8,15}(\?body=[^\s]*)?$/.test(v)) return v;
+  if (/^mailto:[^\s@?]+@[^\s@?]+\.[^\s@?]+(\?[^\s]*)?$/.test(v)) return v;
+  return undefined;
+}

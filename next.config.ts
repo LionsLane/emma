@@ -29,6 +29,8 @@ const csp = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Low-memory machines: EMMA_BUILD_CPUS=2 npm run build (unset on Vercel, so it uses its default).
+  ...(process.env.EMMA_BUILD_CPUS ? { experimental: { cpus: Math.max(1, Number(process.env.EMMA_BUILD_CPUS) || 1) } } : {}),
   async headers() {
     return [
       {

@@ -6,6 +6,8 @@ import { Meter, Panel, Stat } from "@/components/ui";
 import { Sparkline } from "@/components/Charts";
 import { IconCheck, IconGlobe } from "@/components/icons";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { evaluate } from "@/lib/automations";
 
 export default function Dashboard() {
   const ws = useEmma((s) => s.ws);
@@ -31,6 +33,11 @@ export default function Dashboard() {
         <Stat label="Return on ad spend" value={`${m.roas.toFixed(1)}×`} foot={`${money(m.revenue, cur, true)} attributed revenue`} />
         <Stat label="Email open rate" value={pct(m.openRate)} foot="Across everything sent" />
         <Stat label="Content scheduled" value={num(m.published)} foot={`of ${ws.calendar.length} calendar entries`} />
+      </div>
+
+      <div className="grid cols-2">
+        <Funnel />
+        <ReadyForYou />
       </div>
 
       <SearchHealth />
@@ -130,6 +137,61 @@ function SearchHealth() {
           <div style={{ fontWeight: 600 }}>{v ? `Named or cited in ${v.share}% of AI searches` : "Not checked yet"}</div>
           {top && <><div className="small muted" style={{ marginTop: 6 }}>Top fix</div><div className="small"><b>{top.label}.</b> {top.fix}</div></>}
         </div>
+      </div>
+    </Panel>
+  );
+}
+
+// Click → lead → qualified → won. Clicks come from smart links (last 30 days, bots excluded);
+// the lead stages are today's pipeline.
+function Funnel() {
+  const mode = useEmma((s) => s.mode);
+  const wsId = useEmma((s) => s.wsId);
+  const leads = useEmma((s) => s.ws.leads);
+  const [clicks, setClicks] = useState<number | null>(null);
+  useEffect(() => {
+    if (mode !== "cloud" || !wsId) { setClicks(null); return; }
+    let live = true;
+    void fetch(`/api/links?workspaceId=${encodeURIComponent(wsId)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b: { links?: { archived: boolean; stats?: { daily: number[] } }[] } | null) => {
+        if (live) setClicks(b?.links ? b.links.reduce((a, l) => a + (l.stats?.daily.reduce((x, y) => x + y, 0) ?? 0), 0) : null);
+      })
+      .catch(() => live && setClicks(null));
+    return () => { live = false; };
+  }, [mode, wsId]);
+  const qualified = leads.filter((l) => ["qualified", "proposal", "won"].includes(l.stage)).length;
+  const won = leads.filter((l) => l.stage === "won").length;
+  const steps: [string, number | null][] = [["Clicked a smart link (30 days)", clicks], ["Became leads", leads.length], ["Qualified or further", qualified], ["Won customers", won]];
+  const max = Math.max(1, ...steps.map(([, v]) => v ?? 0));
+  return (
+    <Panel title="Growth funnel" right={<Link className="btn ghost sm" href="/app/links">Smart links</Link>}>
+      <div className="stack" style={{ gap: 10 }}>
+        {steps.map(([label, v], i) => {
+          const prev = i > 0 ? steps[i - 1][1] : null;
+          const rate = prev && v !== null && prev > 0 ? Math.round((v / prev) * 100) : null;
+          return (
+            <div key={label}>
+              <div className="row" style={{ justifyContent: "space-between" }}><span className="small">{label}</span><span className="small"><b>{v === null ? "No links yet" : num(v)}</b>{rate !== null ? <span className="muted"> · {rate}%</span> : null}</span></div>
+              <div className="meter-track" style={{ marginTop: 4 }}><div className="meter-fill" style={{ width: `${v === null ? 0 : Math.max(2, (v / max) * 100)}%` }} /></div>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function ReadyForYou() {
+  const ws = useEmma((s) => s.ws);
+  const { suggestions, heldForConsent } = useMemo(() => evaluate(ws), [ws]);
+  const on = (ws.automations ?? []).filter((a) => a.enabled).length;
+  return (
+    <Panel title="Automations" right={<Link className="btn ghost sm" href="/app/automations">Open</Link>}>
+      <div className="stack" style={{ gap: 8 }}>
+        <div className="stat" style={{ padding: 0 }}><div className="label">Ready for you</div><div className="value">{num(suggestions.length)}</div><div className="foot">{on} automation{on === 1 ? "" : "s"} on{heldForConsent ? ` · ${heldForConsent} held for consent` : ""}</div></div>
+        {suggestions.slice(0, 3).map((s) => <div key={s.key} className="small"><b>{s.target.kind === "lead" ? s.target.lead.name : s.target.keyDate.name}</b> <span className="muted">· {s.automationName}</span></div>)}
+        {on === 0 && <Link className="small link" href="/app/automations">Turn on a recipe to get follow-ups lined up for you</Link>}
       </div>
     </Panel>
   );

@@ -37,6 +37,7 @@ export const DOCS: Record<string, LegalDoc> = {
           <li><b>Workspace content</b>: your business profile, calendar, campaigns, leads, emails, library and notes, and your conversations with EMMA.</li>
           <li><b>Leads</b>: contact details you add, and business contact details EMMA finds in public sources (always marked unverified and without consent).</li>
           <li><b>Search &amp; AI</b>: the public web address you ask EMMA to audit, and the results (page title, headings, structured data, and whether AI crawlers may read the site), kept in your workspace. EMMA only reads public pages; it never logs in or reads private addresses.</li>
+          <li><b>Smart links</b>: when someone opens one of your short links, we record the time, the type of device, the country, the website they came from (its name only) and an anonymous number that changes every day, so you can count visitors without anyone being identified. We don&apos;t store IP addresses for clicks and the links set no cookies.</li>
           <li><b>Usage</b>: how many briefs, searches, website audits and AI-visibility checks you use, and the AI processing they needed, so we can enforce plan limits and costs.</li>
           <li><b>Payments</b>: for M-Pesa, the phone number and the receipt. Card payments are handled by Stripe; we never see or store card numbers.</li>
           <li><b>Technical</b>: server logs (including IP address) kept briefly for security, and anonymous, cookie-free page statistics.</li>
