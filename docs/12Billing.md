@@ -16,7 +16,7 @@ Single source of truth for limits: `src/lib/plans.ts`. Payment code: `src/lib/se
 | Website audits (Search & AI) / month | 5 | 30 | 100 |
 | AI-visibility checks / month | 0 | 4 | 12 |
 | Active smart links (per workspace) | 10 | 100 | 1,000 |
-| Audiences and automations | Included | Included | Included |
+| Audiences, automations and broadcasts | Included | Included | Included |
 | Workspaces / seats | 1 / 1 | 1 / 1 | 3 / 3 |
 | Tickets (leads) stored | 50 | 1,000 | Unlimited |
 | Monthly AI-cost cap | USD 0.15 | USD 1.90 | USD 5.80 |

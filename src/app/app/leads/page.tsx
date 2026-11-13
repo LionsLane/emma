@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { cleanTag, leadsFromCsv } from "@/lib/audience";
 import { useEmma } from "@/lib/store";
 import { leadTemp, money, shortDate, STAGE_WEIGHT, STAGES } from "@/lib/metrics";
 import { hostOf, normaliseKenyanPhone, safeHref } from "@/lib/safe";
@@ -25,11 +26,48 @@ export default function Leads() {
     toast(`${l.name || l.company} moved to ${to}.`, to === "won" ? "ok" : "info");
   };
   const [openId, setOpenId] = useState<string | null>(null);
+  const importLeads = useEmma((s) => s.importLeads);
+  const account = useEmma((s) => s.account);
+  const openUpgrade = useEmma((s) => s.openUpgrade);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [tagDraft, setTagDraft] = useState("");
+
+  // Spreadsheet import: CSV with a header row. Duplicates (same email or phone) are left out,
+  // and the plan's lead allowance is respected.
+  const onImport = async (f: File) => {
+    if (f.size > 1_000_000) { toast("That file is over 1 MB. Split it into smaller files.", "warn"); return; }
+    const r = leadsFromCsv(await f.text(), ws.leads);
+    if (!r.columns.length || !r.leads.length) { toast(r.duplicates ? `Nothing new: all ${r.duplicates} rows are already in your leads.` : "No leads found. The first row needs column names like Name, Phone, Email.", "warn"); return; }
+    const capLabel = account?.limits.leads ?? "Unlimited";
+    const cap = /^\d/.test(capLabel) ? Number(capLabel.replace(/,/g, "")) : Number.POSITIVE_INFINITY;
+    const room = Math.max(0, cap - ws.leads.length);
+    if (room === 0) { openUpgrade(`Your plan stores ${capLabel} leads. Upgrade to import more.`); return; }
+    const take = r.leads.slice(0, room);
+    const consented = take.filter((l) => l.consent).length;
+    const lines = [
+      `Import ${take.length} lead${take.length === 1 ? "" : "s"}?`,
+      "",
+      `${consented} marked as agreed to marketing (from your Consent column).`,
+      ...(r.duplicates ? [`${r.duplicates} duplicate${r.duplicates === 1 ? "" : "s"} left out.`] : []),
+      ...(r.leads.length > take.length ? [`${r.leads.length - take.length} left out: your plan stores ${capLabel} leads.`] : []),
+      "",
+      "Only mark consent for people who agreed to hear from you.",
+    ];
+    if (!window.confirm(lines.join("\n"))) return;
+    importLeads(take);
+    toast(`Imported ${take.length} lead${take.length === 1 ? "" : "s"}.`, "ok");
+  };
+  const addTag = (id: string, current: string[] | undefined) => {
+    const t = cleanTag(tagDraft);
+    if (!t) return;
+    patch("leads", id, { tags: [...new Set([...(current ?? []), t])].slice(0, 10) });
+    setTagDraft("");
+  };
   const cur = ws.profile.currency;
   const open = ws.leads.find((l) => l.id === openId) ?? null;
 
   const rows = ws.leads
-    .filter((l) => (!stage || l.stage === stage) && (!q || `${l.name} ${l.company} ${l.role} ${l.source}`.toLowerCase().includes(q.toLowerCase())))
+    .filter((l) => (!stage || l.stage === stage) && (!q || `${l.name} ${l.company} ${l.role} ${l.source} ${(l.tags ?? []).join(" ")}`.toLowerCase().includes(q.toLowerCase())))
     .sort((a, b) => b.score - a.score);
   const openLeads = ws.leads.filter((l) => l.stage !== "won" && l.stage !== "lost");
   const forecast = openLeads.reduce((s, l) => s + l.value * STAGE_WEIGHT[l.stage], 0);
@@ -46,6 +84,8 @@ export default function Leads() {
               <button role="tab" aria-selected={view === "board"} className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Board</button>
               <button role="tab" aria-selected={view === "list"} className={view === "list" ? "on" : ""} onClick={() => setView("list")}>List</button>
             </div>
+            <button className="btn sm" onClick={() => fileRef.current?.click()}>Import CSV</button>
+            <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onImport(f); }} />
             <button className="btn sm" onClick={() => ask("Propose the next touch for every hot and warm open lead, and add tasks for the team.")}><IconUsers />Nurture plan</button>
             <button className="btn ai sm" onClick={() => ask("Research real businesses in our area that fit our best customers and propose them as leads. Only include contact details you can source, with the source link.")}><IconSearch />Find prospects</button>
           </div>
@@ -139,6 +179,15 @@ export default function Leads() {
               ["Source link", safeHref(open.sourceUrl) ? <a href={safeHref(open.sourceUrl)} target="_blank" rel="noreferrer noopener" className="link">{hostOf(open.sourceUrl!)}</a> : ""],
               ["Score", `${open.score} (${leadTemp(open)})`], ["Value", money(open.value, cur)], ["Last touch", shortDate(open.lastTouch)],
             ]} />
+            <div className="field">
+              <label htmlFor="lead-tag">Tags</label>
+              <div className="row" style={{ gap: 6 }}>
+                {(open.tags ?? []).map((t) => (
+                  <span key={t} className="chip">{t}<button type="button" className="linklike" aria-label={`Remove tag ${t}`} onClick={() => patch("leads", open.id, { tags: (open.tags ?? []).filter((x) => x !== t) })}>×</button></span>
+                ))}
+                <input id="lead-tag" className="input sm" style={{ width: 150 }} maxLength={30} placeholder="Add a tag" value={tagDraft} onChange={(e) => setTagDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(open.id, open.tags); } }} onBlur={() => addTag(open.id, open.tags)} />
+              </div>
+            </div>
             <div className="field">
               <label htmlFor="notes">Notes</label>
               <textarea id="notes" className="textarea" value={open.notes} onChange={(e) => patch("leads", open.id, { notes: e.target.value })} />

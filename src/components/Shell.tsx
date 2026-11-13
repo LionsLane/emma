@@ -15,7 +15,7 @@ import { IconChat, IconClose, IconMenu, IconRefresh, IconSearch } from "./icons"
 // Sidebar sections (Command Center sits above them). Every NAV entry appears in exactly one group.
 const NAV_GROUPS: { label: string; hrefs: string[] }[] = [
   { label: "Plan & create", hrefs: ["/app/dashboard", "/app/calendar", "/app/campaigns", "/app/library"] },
-  { label: "Customers", hrefs: ["/app/leads", "/app/audiences", "/app/automations", "/app/email"] },
+  { label: "Customers", hrefs: ["/app/leads", "/app/audiences", "/app/automations", "/app/broadcasts", "/app/email"] },
   { label: "Grow", hrefs: ["/app/search", "/app/links", "/app/catalog", "/app/roi"] },
 ];
 

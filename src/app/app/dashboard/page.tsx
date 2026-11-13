@@ -40,6 +40,8 @@ export default function Dashboard() {
         <ReadyForYou />
       </div>
 
+      <SourceFunnel />
+
       <SearchHealth />
 
       <div className="grid cols-3">
@@ -192,6 +194,39 @@ function ReadyForYou() {
         <div className="stat" style={{ padding: 0 }}><div className="label">Ready for you</div><div className="value">{num(suggestions.length)}</div><div className="foot">{on} automation{on === 1 ? "" : "s"} on{heldForConsent ? ` · ${heldForConsent} held for consent` : ""}</div></div>
         {suggestions.slice(0, 3).map((s) => <div key={s.key} className="small"><b>{s.target.kind === "lead" ? s.target.lead.name : s.target.keyDate.name}</b> <span className="muted">· {s.automationName}</span></div>)}
         {on === 0 && <Link className="small link" href="/app/automations">Turn on a recipe to get follow-ups lined up for you</Link>}
+      </div>
+    </Panel>
+  );
+}
+
+// Which channels bring leads that turn into customers (emma.io calls this a segmented funnel).
+function SourceFunnel() {
+  const leads = useEmma((s) => s.ws.leads);
+  const cur = useEmma((s) => s.ws.profile.currency);
+  const rows = useMemo(() => {
+    const by = new Map<string, { leads: number; qualified: number; won: number; value: number }>();
+    for (const l of leads) {
+      const k = (l.source || "Unknown").trim() || "Unknown";
+      const r = by.get(k) ?? { leads: 0, qualified: 0, won: 0, value: 0 };
+      r.leads++;
+      if (["qualified", "proposal", "won"].includes(l.stage)) r.qualified++;
+      if (l.stage === "won") { r.won++; r.value += l.value; }
+      by.set(k, r);
+    }
+    return [...by.entries()].map(([source, r]) => ({ source, ...r })).sort((a, b) => b.won - a.won || b.leads - a.leads).slice(0, 8);
+  }, [leads]);
+  if (rows.length < 2) return null; // one source (or none) has nothing to compare
+  return (
+    <Panel title="Where customers come from" hint="By lead source">
+      <div className="table-wrap">
+        <table className="t">
+          <thead><tr><th>Source</th><th className="num">Leads</th><th className="num">Qualified</th><th className="num">Won</th><th className="num">Win rate</th><th className="num">Won value</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.source}><td><b>{r.source}</b></td><td className="num">{num(r.leads)}</td><td className="num">{num(r.qualified)}</td><td className="num">{num(r.won)}</td><td className="num">{r.leads >= 5 ? pct(r.won / r.leads) : <span className="faint" title="Fewer than 5 leads">too few</span>}</td><td className="num">{money(r.value, cur, true)}</td></tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Panel>
   );

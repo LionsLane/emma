@@ -165,6 +165,7 @@ export interface Lead {
   lastTouch: string;
   notes: string;
   sourceUrl?: string;
+  tags?: string[]; // free labels, e.g. "wholesale", "event-2026"
   verified: boolean; // false = researched by EMMA, contact details still need a human check
   consent: boolean; // has opted in to marketing contact
 }
@@ -356,7 +357,7 @@ export interface VisibilityReport {
 // ---- Audiences and Automations. Segments filter leads; automations suggest actions for a person
 // to approve (EMMA never sends on her own). Each automation remembers who it already covered.
 
-export type SegmentField = "stage" | "source" | "score" | "value" | "consent" | "verified" | "lastTouchDays" | "text";
+export type SegmentField = "stage" | "source" | "score" | "value" | "consent" | "verified" | "lastTouchDays" | "text" | "tag" | "company" | "role" | "hasPhone" | "hasEmail";
 export type SegmentOp = "is" | "isNot" | "gte" | "lte" | "contains";
 export interface SegmentRule { field: SegmentField; op: SegmentOp; value: string }
 export interface Segment { id: Id; name: string; match: "all" | "any"; rules: SegmentRule[]; createdAt: string }
@@ -369,7 +370,8 @@ export type AutomationTrigger =
 export type AutomationAction =
   | { kind: "message"; channel: "whatsapp" | "email" | "sms"; text: string }
   | { kind: "task"; title: string }
-  | { kind: "moveStage"; stage: LeadStage };
+  | { kind: "moveStage"; stage: LeadStage }
+  | { kind: "tag"; tag: string };
 export interface Automation {
   id: Id;
   name: string;
@@ -380,6 +382,26 @@ export interface Automation {
   cooldownDays: number; // frequency cap per lead (or per key date)
   fired: Record<string, string>; // lead or key-date id → ISO date last approved or skipped
   createdAt: string;
+}
+
+// ---- Broadcasts: one message (in up to 5 versions) to an audience, sent by a person tapping
+// through a queue. Only leads who agreed to marketing are included. A hold-out group gets nothing,
+// so the owner can see whether the message made a difference.
+
+export interface BroadcastVariant { id: Id; label: string; text: string; linkCode?: string; short?: string }
+// Every recipient gets an entry when the broadcast is created, so the list is frozen at that moment.
+export interface BroadcastSend { v: Id | "holdout"; at: string; state: "queued" | "sent" | "skipped" | "holdout"; stageAt: LeadStage }
+export interface Broadcast {
+  id: Id;
+  name: string;
+  channel: "whatsapp" | "sms" | "email";
+  audience: string; // "" = everyone consented, a Segment id, or "smart:<id>"
+  variants: BroadcastVariant[];
+  holdoutPct: number; // 0 to 50
+  destination?: string; // page the tracked {link} opens
+  status: "sending" | "done";
+  createdAt: string;
+  sends: Record<Id, BroadcastSend>; // lead id → what happened
 }
 
 export interface Workspace {
@@ -400,6 +422,7 @@ export interface Workspace {
   visibility?: VisibilityReport[]; // newest first, last 12 kept
   segments?: Segment[];
   automations?: Automation[];
+  broadcasts?: Broadcast[];
 }
 
 // ---- Proposals: EMMA never writes straight into the workspace. She proposes,

@@ -702,3 +702,10 @@ table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
   .aud-rule { flex-wrap: wrap !important; }
   .aud-rule > .select, .aud-rule > .input { flex-basis: calc(50% - 8px); }
 }
+
+/* Broadcasts and audience rows */
+.bc-row { width: 100%; background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; align-items: center; gap: 12px; }
+.bc-row:hover { background: var(--surface-hover); }
+.bc-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.aud-row { align-items: center; gap: 12px; }
+@media (max-width: 640px) { .aud-row, .bc-row { flex-wrap: wrap; } .aud-row > .select, .aud-row > .row { width: 100%; } }

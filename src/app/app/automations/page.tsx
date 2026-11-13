@@ -32,7 +32,7 @@ export default function AutomationsPage() {
     const href = safeActionHref(s.link);
     if (s.action.kind === "message" && href) window.open(href, "_blank", "noopener,noreferrer");
     resolve(s, "approve");
-    toast(s.action.kind === "message" ? (href ? "Opened with the message ready. Press send in your app." : "Marked as contacted. Add a phone or email to send next time.") : s.action.kind === "task" ? "Task added." : "Lead moved.", "ok");
+    toast(s.action.kind === "message" ? (href ? "Opened with the message ready. Press send in your app." : "Marked as contacted. Add a phone or email to send next time.") : s.action.kind === "task" ? "Task added." : s.action.kind === "tag" ? "Tag added." : "Lead moved.", "ok");
   };
 
   return (
@@ -52,7 +52,7 @@ export default function AutomationsPage() {
                   {s.action.kind === "message" && !s.link && <div className="small faint">No {s.action.channel === "email" ? "email address" : "phone number"} on this lead.</div>}
                 </div>
                 <div className="row" style={{ gap: 6 }}>
-                  <button className="btn primary sm" onClick={() => approve(s)}>{s.action.kind === "message" ? (s.action.channel === "whatsapp" ? "Open WhatsApp" : s.action.channel === "sms" ? "Open SMS" : "Open email") : s.action.kind === "task" ? "Add task" : "Move lead"}</button>
+                  <button className="btn primary sm" onClick={() => approve(s)}>{s.action.kind === "message" ? (s.action.channel === "whatsapp" ? "Open WhatsApp" : s.action.channel === "sms" ? "Open SMS" : "Open email") : s.action.kind === "task" ? "Add task" : s.action.kind === "tag" ? "Add tag" : "Move lead"}</button>
                   <button className="btn ghost sm" onClick={() => resolve(s, "skip")}>Skip</button>
                 </div>
               </div>
@@ -116,7 +116,7 @@ function Editor({ a, onClose, onSave }: { a: Automation | null; onClose: () => v
   if (a && (!x || x.id !== a.id)) setX(a);
   if (!a || !x) return null;
   const setTrigger = (kind: AutomationTrigger["kind"]) => setX({ ...x, trigger: kind === "newLead" ? { kind } : kind === "stageQuiet" ? { kind, stage: "contacted", days: 3 } : kind === "hotLead" ? { kind, score: 75 } : { kind, daysBefore: 14 } });
-  const setAction = (kind: AutomationAction["kind"]) => setX({ ...x, action: kind === "message" ? { kind, channel: "whatsapp", text: "Hi {first_name}, " } : kind === "task" ? { kind, title: "Follow up with {name}" } : { kind, stage: "contacted" } });
+  const setAction = (kind: AutomationAction["kind"]) => setX({ ...x, action: kind === "message" ? { kind, channel: "whatsapp", text: "Hi {first_name}, " } : kind === "task" ? { kind, title: "Follow up with {name}" } : kind === "tag" ? { kind, tag: "" } : { kind, stage: "contacted" } });
   return (
     <Modal open onClose={onClose} label="Automation">
       <div className="stack" style={{ padding: 22, gap: 12 }}>
@@ -140,7 +140,7 @@ function Editor({ a, onClose, onSave }: { a: Automation | null; onClose: () => v
         )}
         <div className="field"><label htmlFor="au-then">Then</label>
           <select id="au-then" className="select" value={x.action.kind} onChange={(e) => setAction(e.target.value as AutomationAction["kind"])}>
-            <option value="message">draft a message</option><option value="task">create a task</option>{x.trigger.kind !== "keyDate" && <option value="moveStage">move the lead to a stage</option>}
+            <option value="message">draft a message</option><option value="task">create a task</option>{x.trigger.kind !== "keyDate" && <option value="moveStage">move the lead to a stage</option>}{x.trigger.kind !== "keyDate" && <option value="tag">tag the lead</option>}
           </select></div>
         {x.action.kind === "message" && (
           <>
@@ -151,6 +151,7 @@ function Editor({ a, onClose, onSave }: { a: Automation | null; onClose: () => v
         )}
         {x.action.kind === "task" && <div className="field"><label htmlFor="au-task">Task</label><input id="au-task" className="input" maxLength={160} value={x.action.title} onChange={(e) => setX({ ...x, action: { kind: "task", title: e.target.value } })} /><span className="help">Use {"{name}"}, {"{company}"}, {"{date_name}"}, {"{date}"}.</span></div>}
         {x.action.kind === "moveStage" && <div className="field"><label htmlFor="au-to">Move to</label><select id="au-to" className="select" value={x.action.stage} onChange={(e) => setX({ ...x, action: { kind: "moveStage", stage: e.target.value as LeadStage } })}>{STAGES.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>}
+        {x.action.kind === "tag" && <div className="field"><label htmlFor="au-tag">Tag</label><input id="au-tag" className="input" maxLength={30} placeholder="vip" value={x.action.tag} onChange={(e) => setX({ ...x, action: { kind: "tag", tag: e.target.value } })} /><span className="help">Use tags in Audiences to group leads.</span></div>}
         <div className="field"><label htmlFor="au-cool">At most once every (days)</label><input id="au-cool" className="input" type="number" min={1} max={365} value={x.cooldownDays} onChange={(e) => setX({ ...x, cooldownDays: Math.max(1, Math.min(365, Number(e.target.value) || 7)) })} /></div>
         <div className="row"><button className="btn primary" onClick={() => onSave({ ...x, name: x.name.trim() || "Untitled automation" })}>Save</button><button className="btn ghost" onClick={onClose}>Cancel</button></div>
       </div>

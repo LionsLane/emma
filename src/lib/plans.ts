@@ -29,7 +29,7 @@ export const PLANS: Record<PlanId, Plan> = {
     model: "claude-haiku-5-5", modelLabel: "Claude Haiku 5.5",
     briefsPerMonth: 15, searchesPerMonth: 0, juryPerMonth: 0, auditsPerMonth: 5, visibilityPerMonth: 0, smartLinks: 10, workspaces: 1, seats: 1, leads: 50, costCapUSD: 0.15,
     blurb: "Try EMMA on your business. No card needed.",
-    features: ["15 briefs a month", "Content calendar, leads, email and library", "5 website audits for Google and AI search", "10 smart links with QR codes", "Audiences and follow-up automations", "50 leads", "Approve everything before it goes out"],
+    features: ["15 briefs a month", "Content calendar, leads, email and library", "5 website audits for Google and AI search", "10 smart links with QR codes", "Audiences, automations and broadcasts", "50 leads", "Approve everything before it goes out"],
   },
   pro: {
     id: "pro", name: "Pro", priceKES: 500,

@@ -12,8 +12,9 @@ import { applyProposal, KIND_LABEL } from "./proposals";
 import { seedWorkspace, WORKSPACE_VERSION } from "./seed";
 import { CLOUD } from "./supabase/env";
 import { supabaseBrowser } from "./supabase/browser";
-import type { AgentEvent, Automation, ClientProfile, JuryCase, JuryEvent, JuryRound, Proposal, SearchAudit, Segment, UsageTotals, VisibilityReport, Workspace } from "./types";
+import type { AgentEvent, Automation, Broadcast, ClientProfile, JuryCase, Lead, JuryEvent, JuryRound, Proposal, SearchAudit, Segment, UsageTotals, VisibilityReport, Workspace } from "./types";
 import type { Suggestion } from "./automations";
+import { cleanTag } from "./audience";
 
 export type { ChatMessage, ChatPart } from "./chat";
 
@@ -78,6 +79,11 @@ interface EmmaState {
   remove: (key: CollectionKey, id: string) => void;
   addActivity: (text: string, by: "emma" | "team") => void;
   saveAudit: (a: SearchAudit) => void;
+  importLeads: (leads: Omit<Lead, "id">[]) => void;
+  saveBroadcast: (b: Broadcast) => void;
+  deleteBroadcast: (id: string) => void;
+  markBroadcast: (id: string, leadId: string, state: "sent" | "skipped") => void;
+  endBroadcast: (id: string) => void;
   saveSegment: (seg: Segment) => void;
   deleteSegment: (id: string) => void;
   saveAutomation: (a: Automation) => void;
@@ -357,6 +363,31 @@ export const useEmma = create<EmmaState>()(
           audits: [a, ...(ws.audits ?? []).filter((x) => x.id !== a.id)].slice(0, 12),
           activity: [{ id: uid("ac"), at: a.at, by: "team" as const, text: `Site audit of ${a.finalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}: ${a.scores.overall}/100` }, ...ws.activity].slice(0, 60),
         })),
+        saveBroadcast: (b) => edit((ws) => ({
+          ...ws,
+          broadcasts: [b, ...(ws.broadcasts ?? []).filter((x) => x.id !== b.id)].slice(0, 30),
+          activity: (ws.broadcasts ?? []).some((x) => x.id === b.id) ? ws.activity : [{ id: uid("ac"), at: new Date().toISOString(), by: "team" as const, text: `Broadcast "${b.name}" created for ${Object.keys(b.sends).length} people` }, ...ws.activity].slice(0, 60),
+        })),
+        deleteBroadcast: (id) => edit((ws) => ({ ...ws, broadcasts: (ws.broadcasts ?? []).filter((x) => x.id !== id) })),
+        endBroadcast: (id) => edit((ws) => ({ ...ws, broadcasts: (ws.broadcasts ?? []).map((b) => (b.id === id ? { ...b, status: "done" as const } : b)) })),
+        markBroadcast: (id, leadId, state) => edit((ws) => {
+          const now = new Date().toISOString();
+          const broadcasts = (ws.broadcasts ?? []).map((b) => {
+            const cur = b.sends[leadId];
+            if (b.id !== id || !cur || cur.state !== "queued") return b;
+            const sends = { ...b.sends, [leadId]: { ...cur, state, at: now } };
+            const left = Object.values(sends).some((x) => x.state === "queued");
+            return { ...b, sends, status: left ? b.status : ("done" as const) };
+          });
+          // A sent message is a contact; a skip isn't.
+          const leads = state === "sent" ? ws.leads.map((l) => (l.id === leadId ? { ...l, lastTouch: now.slice(0, 10) } : l)) : ws.leads;
+          return { ...ws, broadcasts, leads };
+        }),
+        importLeads: (leads) => edit((ws) => ({
+          ...ws,
+          leads: [...leads.map((l) => ({ ...l, id: uid("ld") })), ...ws.leads],
+          activity: [{ id: uid("ac"), at: new Date().toISOString(), by: "team" as const, text: `Imported ${leads.length} lead${leads.length === 1 ? "" : "s"} from a spreadsheet` }, ...ws.activity].slice(0, 60),
+        })),
         saveSegment: (seg) => edit((ws) => ({ ...ws, segments: [seg, ...(ws.segments ?? []).filter((x) => x.id !== seg.id)].slice(0, 50) })),
         deleteSegment: (id) => edit((ws) => ({
           ...ws,
@@ -379,12 +410,23 @@ export const useEmma = create<EmmaState>()(
             next = { ...next, tasks: [{ id: uid("tk"), title: sg.text.slice(0, 200), due, owner: "Team", done: false, area: "Automation" }, ...next.tasks], activity: [act(`Automation "${sg.automationName}": task added`), ...next.activity].slice(0, 60) };
           } else if (sg.target.kind === "lead") {
             const lead = sg.target.lead;
-            const stage = sg.action.kind === "moveStage" ? sg.action.stage : lead.stage === "new" ? "contacted" : lead.stage;
-            next = {
-              ...next,
-              leads: next.leads.map((l) => (l.id === lead.id ? { ...l, stage, lastTouch: today } : l)),
-              activity: [act(sg.action.kind === "message" ? `Automation "${sg.automationName}": ${sg.action.channel} message to ${lead.name}` : `Automation "${sg.automationName}": ${lead.name} moved to ${stage}`), ...next.activity].slice(0, 60),
-            };
+            const action = sg.action;
+            if (action.kind === "tag") {
+              const tag = cleanTag(action.tag);
+              // Tagging isn't a contact, so the last-touch date stays as it was.
+              next = {
+                ...next,
+                leads: next.leads.map((l) => (l.id === lead.id ? { ...l, tags: [...new Set([...(l.tags ?? []), tag])].slice(0, 10) } : l)),
+                activity: [act(`Automation "${sg.automationName}": ${lead.name || lead.company} tagged "${tag}"`), ...next.activity].slice(0, 60),
+              };
+            } else {
+              const stage = action.kind === "moveStage" ? action.stage : lead.stage === "new" ? "contacted" : lead.stage;
+              next = {
+                ...next,
+                leads: next.leads.map((l) => (l.id === lead.id ? { ...l, stage, lastTouch: today } : l)),
+                activity: [act(action.kind === "message" ? `Automation "${sg.automationName}": ${action.channel} message to ${lead.name}` : `Automation "${sg.automationName}": ${lead.name} moved to ${stage}`), ...next.activity].slice(0, 60),
+              };
+            }
           }
           return next;
         }),

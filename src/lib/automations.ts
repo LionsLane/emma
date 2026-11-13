@@ -2,7 +2,7 @@
 // changed until someone taps Approve, and messages to people who haven't agreed to marketing are
 // held back (Kenya Data Protection Act 2019), except replies to people already talking to you.
 
-import { daysSince, inSegment } from "./audience";
+import { daysSince, hasTag, inSegment } from "./audience";
 import type { Automation, AutomationAction, AutomationTrigger, KeyDate, Lead, LeadStage, Workspace } from "./types";
 
 export interface Suggestion {
@@ -80,7 +80,8 @@ export function evaluate(ws: Workspace, now = new Date()): { suggestions: Sugges
       const why = leadTriggered(a.trigger, l, now);
       if (!why || !cooled(l.id)) continue;
       if (a.action.kind === "message" && !l.consent && !ACTIVE.includes(l.stage)) { held++; continue; }
-      const text = fill(a.action.kind === "task" ? a.action.title : a.action.kind === "message" ? a.action.text : `Move ${l.name} to ${a.action.stage}`, { lead: l, business });
+      if (a.action.kind === "tag" && (!a.action.tag.trim() || hasTag(l, a.action.tag))) continue; // no tag set, or already tagged
+      const text = fill(a.action.kind === "task" ? a.action.title : a.action.kind === "message" ? a.action.text : a.action.kind === "tag" ? `Tag ${l.name || l.company} as "${a.action.tag}"` : `Move ${l.name || l.company} to ${a.action.stage}`, { lead: l, business });
       out.push({ key: `${a.id}|${l.id}`, automationId: a.id, automationName: a.name, target: { kind: "lead", lead: l }, action: a.action, text, reason: why, link: actionLink(a.action, text, l) });
     }
   }
@@ -109,5 +110,6 @@ export function describeTrigger(t: AutomationTrigger): string {
 export function describeAction(a: AutomationAction): string {
   if (a.kind === "message") return `draft a ${a.channel === "whatsapp" ? "WhatsApp" : a.channel === "sms" ? "text" : "email"} message`;
   if (a.kind === "task") return "create a task";
+  if (a.kind === "tag") return `tag the lead "${a.tag}"`;
   return `move the lead to "${a.stage}"`;
 }
