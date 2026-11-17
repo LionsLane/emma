@@ -6,6 +6,20 @@ EMMA is the marketing team that already knows your business. Brief her in one se
 
 **Plans:** Free (Claude Haiku 5.5) · Pro **KES 500/month** (Claude Sonnet 5.5) · Max **KES 1,500/month** (Claude Opus 5.5). Pay with M-Pesa or card.
 
+Live: **https://emma.lionslane.co.ke**
+
+## The African problem
+
+Kenyan small businesses do not have a writing problem — free tools already write. They have a **consistency and follow-up** problem: they post for a week and stop, and the customer who asked the price on WhatsApp goes quiet and is never chased. The tools that exist are English-first, desktop-first and priced for agencies (KES 2,999–150,000 a month), while their customers buy on WhatsApp in a mix of English, Kiswahili and Sheng, and pay for every megabyte and every 160-character SMS segment.
+
+EMMA runs the marketing a small business actually does: a one-sentence brief in, a month of calendar, campaigns, follow-up messages and leads out — in shillings, over WhatsApp, inside Kenya's Data Protection Act, and approved by the owner with **Sawa/Bado** before anything leaves the building.
+
+## How we kept tokens low
+
+1. **One cached persona block, byte-identical on every request**, so the expensive system prompt is billed as a cache read instead of fresh input on each brief.
+2. **Bounded briefs:** zod caps the input at 4,000 characters, the agent loop stops at 14 tool steps, and tools read the workspace server-side rather than making the model re-read history.
+3. **Deterministic work stays out of the model:** pricing, SMS segment maths, site audits and metering are code. The Swahili/Sheng localiser (`emma-sheng`) runs on a phrase bank with zero model calls at runtime.
+
 ## Run it locally
 
 ```bash
