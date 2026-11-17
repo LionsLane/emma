@@ -10,9 +10,20 @@ Live: **https://emma.lionslane.co.ke**
 
 ## The African problem
 
-Kenyan small businesses do not have a writing problem — free tools already write. They have a **consistency and follow-up** problem: they post for a week and stop, and the customer who asked the price on WhatsApp goes quiet and is never chased. The tools that exist are English-first, desktop-first and priced for agencies (KES 2,999–150,000 a month), while their customers buy on WhatsApp in a mix of English, Kiswahili and Sheng, and pay for every megabyte and every 160-character SMS segment.
+Small businesses across Africa do not have a writing problem. Free tools already write. They have a **consistency and follow-up** problem: they post for a week and then stop, and the customer who asked the price on WhatsApp goes quiet and is never chased.
 
-EMMA runs the marketing a small business actually does: a one-sentence brief in, a month of calendar, campaigns, follow-up messages and leads out — in shillings, over WhatsApp, inside Kenya's Data Protection Act, and approved by the owner with **Sawa/Bado** before anything leaves the building.
+The tools that exist were not built for this market. They are English first, desktop first, and priced for agencies. The lead data that European and North American teams take for granted (Apollo, Lusha, LinkedIn Sales Navigator) is licensed in dollars per seat per month, which puts reliable B2B and B2C contact discovery out of reach for most African SMEs, and very little of it is mapped for African small business sectors.
+
+EMMA runs the marketing a small business actually does: a one sentence brief in, a month of calendar, campaigns, follow up messages and leads out, in local currency, over WhatsApp, inside the local data protection law, and approved by the owner with **Sawa** or **Bado** before anything leaves.
+
+**Kenya is the case study and the first launch market.** It is where EMMA was born, where Lions Lane already runs marketing for real businesses, and where the workflow was tested in shillings, M-Pesa and WhatsApp. The same design travels across East Africa and the rest of the continent, because the constraints repeat: mobile first, cash and mobile money, informal lead capture, and a marketing budget measured in tens of dollars a month.
+
+## Why this saves a business money
+
+- **No second lead database to buy.** Lead discovery happens inside the workspace and through metered web search that is already included in the plan, instead of a per seat contact database billed in dollars.
+- **A fixed AI ceiling per plan.** Free, Pro and Max each carry a hard monthly AI cost cap, so a busy month cannot produce a surprise bill.
+- **Fewer tools to pay for.** Plan, copy, calendar, follow up and a sendable WhatsApp message come out of one brief, so there is no separate scheduler, design tool or retainer keeping the calendar full.
+- **Deterministic work stays in code.** Pricing, SMS segment maths, site audits and metering are not model calls, so they cost nothing per use.
 
 ## How we kept tokens low
 
